@@ -15,9 +15,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-    /* ========================================
-       متغيرات الألوان - الوضع النهاري
-       ======================================== */
     :root {
       --primary: #1e3a5f; --primary-light: #3a5a8f; --primary-dark: #152a45;
       --secondary: #2e5a8f; --accent: #3a7abf;
@@ -32,7 +29,6 @@
       --radius: 12px; --radius-lg: 16px; --radius-xl: 24px;
       --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
     }
-    
     [data-theme="dark"] {
       --primary: #3a5a8f; --primary-light: #5a7abf; --primary-dark: #1e3a5f;
       --secondary: #4a6a9f; --accent: #5a8abf;
@@ -43,32 +39,19 @@
       --shadow: 0 4px 12px rgba(0,0,0,0.4);
       --shadow-lg: 0 10px 30px rgba(0,0,0,0.5);
     }
-    
     * { margin:0; padding:0; box-sizing:border-box; font-family:'Tajawal',sans-serif; transition:var(--transition); }
     body { background:var(--bg-main); color:var(--text-main); min-height:100vh; padding:20px; line-height:1.6; }
     .container { max-width:1200px; margin:0 auto; }
     
-    /* شريط التحكم العلوي - بدون شعار الاتصال */
-    .ctrl-bar { 
-      background:var(--bg-card); padding:14px 24px; border-radius:var(--radius-lg); 
-      margin-bottom:24px; display:flex; justify-content:flex-end; gap:10px;
-      box-shadow:var(--shadow); border:1px solid var(--border-light);
-    }
-    .ctrl-btn { 
-      width:44px; height:44px; border-radius:var(--radius); border:2px solid var(--border);
-      background:var(--bg-input); color:var(--text-secondary); display:flex; 
-      align-items:center; justify-content:center; cursor:pointer; font-size:1.2rem;
-      box-shadow:var(--shadow-sm);
-    }
+    .ctrl-bar { background:var(--bg-card); padding:14px 24px; border-radius:var(--radius-lg); margin-bottom:24px; display:flex; justify-content:flex-end; gap:10px; box-shadow:var(--shadow); border:1px solid var(--border-light); }
+    .ctrl-btn { width:44px; height:44px; border-radius:var(--radius); border:2px solid var(--border); background:var(--bg-input); color:var(--text-secondary); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.2rem; box-shadow:var(--shadow-sm); }
     .ctrl-btn:hover { background:var(--primary); color:#fff; border-color:var(--primary); transform:translateY(-2px); }
     
-    /* التبويبات */
     .tabs { display:flex; gap:10px; margin-bottom:28px; background:var(--bg-card); padding:8px; border-radius:var(--radius-lg); box-shadow:var(--shadow); border:1px solid var(--border-light); }
     .tab { padding:12px 24px; border:none; background:transparent; cursor:pointer; border-radius:var(--radius); font-weight:700; font-size:0.95rem; color:var(--text-muted); display:flex; align-items:center; gap:8px; }
     .tab.active { background:var(--gradient); color:#fff; box-shadow:var(--shadow); }
     .tab:hover:not(.active) { background:var(--bg-input); color:var(--text-main); }
     
-    /* الألواح */
     .panel { display:none; background:var(--bg-card); padding:32px; border-radius:var(--radius-xl); box-shadow:var(--shadow-lg); border:1px solid var(--border-light); animation:fadeIn 0.4s ease; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
     .panel.active { display:block; }
@@ -76,7 +59,6 @@
     h2 { margin-bottom:28px; background:var(--gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; font-size:1.6rem; font-weight:800; display:flex; align-items:center; gap:12px; }
     h2 i { color:var(--primary); -webkit-text-fill-color:var(--primary); }
     
-    /* النماذج */
     .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; margin-bottom:28px; }
     .form-group { display:flex; flex-direction:column; gap:8px; }
     label { font-size:0.9rem; font-weight:700; color:var(--text-secondary); display:flex; align-items:center; gap:8px; }
@@ -84,7 +66,6 @@
     input, select, textarea { padding:14px 16px; border:2px solid var(--border); border-radius:var(--radius); font-size:0.95rem; outline:none; background:var(--bg-input); color:var(--text-main); font-weight:500; }
     input:focus, select:focus, textarea:focus { border-color:var(--primary); box-shadow:0 0 0 4px rgba(30,58,95,0.15); background:var(--bg-card); }
     
-    /* الأزرار */
     .btn { padding:14px 24px; border:none; border-radius:var(--radius); cursor:pointer; font-weight:700; font-size:0.95rem; display:inline-flex; align-items:center; gap:10px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
     .btn::before { content:''; position:absolute; top:50%; left:50%; width:0; height:0; border-radius:50%; background:rgba(255,255,255,0.3); transform:translate(-50%,-50%); transition:width 0.6s,height 0.6s; }
     .btn:hover::before { width:300px; height:300px; }
@@ -98,11 +79,9 @@
     .btn-sec:hover { background:var(--primary); color:#fff; border-color:var(--primary); transform:translateY(-2px); }
     .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none !important; }
     
-    /* الفلاتر */
     .filters { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:28px; padding:20px; background:var(--bg-input); border-radius:var(--radius-lg); border:1px solid var(--border-light); }
     .filters input, .filters select { padding:12px 16px; font-size:0.9rem; border-radius:var(--radius); }
     
-    /* الجداول */
     .table-wrap { overflow-x:auto; border-radius:var(--radius-lg); border:1px solid var(--border-light); box-shadow:var(--shadow-sm); }
     table { width:100%; border-collapse:separate; border-spacing:0; min-width:900px; }
     th, td { padding:16px 20px; text-align:right; border-bottom:1px solid var(--border-light); font-size:0.9rem; }
@@ -110,14 +89,12 @@
     tr:hover { background:var(--bg-hover); }
     tr.selected { background:rgba(30,58,95,0.08); border-left:3px solid var(--primary); }
     
-    /* الشارات */
     .badge { padding:6px 14px; border-radius:20px; font-size:0.8rem; font-weight:700; display:inline-flex; align-items:center; gap:6px; }
     .badge-pending { background:rgba(154,123,70,0.15); color:var(--warning); border:1px solid rgba(154,123,70,0.3); }
     .badge-confirmed { background:rgba(45,122,79,0.15); color:var(--success); border:1px solid rgba(45,122,79,0.3); }
     .badge-cancelled { background:rgba(139,58,58,0.15); color:var(--error); border:1px solid rgba(139,58,58,0.3); }
     .badge-completed { background:rgba(58,122,191,0.15); color:var(--accent); border:1px solid rgba(58,122,191,0.3); }
     
-    /* الإجراءات */
     .actions { display:flex; gap:10px; flex-wrap:wrap; }
     .action-btn { padding:8px 14px; border-radius:var(--radius); border:none; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; gap:6px; transition:var(--transition); font-weight:600; }
     .action-btn.wa { background:rgba(30,58,95,0.1); color:var(--primary); border:1px solid rgba(30,58,95,0.3); }
@@ -127,21 +104,18 @@
     .action-btn.edit { background:rgba(154,123,70,0.1); color:var(--warning); border:1px solid rgba(154,123,70,0.3); }
     .action-btn.edit:hover { background:var(--warning); color:#fff; transform:translateY(-2px); }
     
-    /* النوافذ */
     .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.75); display:none; justify-content:center; align-items:center; z-index:999; backdrop-filter:blur(8px); animation:fadeIn 0.3s ease; }
     .modal.show { display:flex; }
     .modal-box { background:var(--bg-card); padding:32px; border-radius:var(--radius-xl); max-width:500px; width:90%; box-shadow:var(--shadow-lg); border:1px solid var(--border-light); animation:slideUp 0.4s ease; }
     @keyframes slideUp { from{opacity:0;transform:translateY(50px) scale(0.9)} to{opacity:1;transform:translateY(0) scale(1)} }
     .modal-box h3 { color:var(--primary); margin-bottom:20px; text-align:center; font-size:1.4rem; font-weight:800; }
     
-    /* التنبيهات */
     .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(100px); background:var(--bg-card); color:var(--text-main); padding:14px 24px; border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); border-left:4px solid var(--primary); z-index:1000; display:flex; align-items:center; gap:10px; font-weight:600; transition:transform 0.3s ease; }
     .toast.show { transform:translateX(-50%) translateY(0); }
     .toast.warn { border-left-color:var(--warning); }
     .toast.error { border-left-color:var(--error); }
     .toast.success { border-left-color:var(--success); }
     
-    /* شريط التحذير */
     .warning-bar { background:rgba(154,123,70,0.15); border:1px solid rgba(154,123,70,0.3); border-radius:var(--radius); padding:12px 16px; margin:12px 0; display:none; align-items:center; gap:10px; color:var(--warning); font-size:0.9rem; font-weight:600; }
     .warning-bar.show { display:flex; animation:fadeIn 0.3s ease; }
     .warning-bar i { font-size:1.1rem; }
@@ -155,7 +129,7 @@
 </head>
 <body>
   <div class="container">
-    <!-- شريط التحكم - بدون شعار الاتصال -->
+    <!-- شريط التحكم -->
     <div class="ctrl-bar">
       <button class="ctrl-btn" id="langToggle" title="English"><i class="fas fa-globe"></i></button>
       <button class="ctrl-btn" id="themeToggle" title="Dark Mode"><i class="fas fa-moon"></i></button>
@@ -234,13 +208,10 @@
             </select>
           </div>
         </div>
-        
-        <!-- شريط التحذير -->
         <div class="warning-bar" id="warningBar">
           <i class="fas fa-exclamation-triangle"></i>
           <span id="warningText"></span>
         </div>
-        
         <button type="submit" class="btn btn-primary" id="btnSave">
           <i class="fas fa-save"></i> <span id="btnSaveText">حفظ الموعد</span>
         </button>
@@ -329,7 +300,6 @@
     let selected = new Set();
     let batch = [], batchIdx = 0;
     let settings = { allowedDays:[0,1,2,3,4], blocked:[], start:'09:00', end:'17:00' };
-    let pendingSubmit = false;
 
     const $ = id => document.getElementById(id);
 
@@ -404,7 +374,7 @@
     function toggleLang() { setLang(lang = lang === 'ar' ? 'en' : 'ar'); }
 
     // ========================================
-    // التبويبات - باستخدام addEventListener
+    // التبويبات
     // ========================================
     function switchTab(tabId) {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -414,7 +384,7 @@
     }
 
     // ========================================
-    // عرض الجدول
+    // عرض الجدول - مع ربط الأحداث باستخدام addEventListener
     // ========================================
     function renderTable(list) {
       const tb = $('tableBody'), t = T[lang];
@@ -440,7 +410,7 @@
         tb.appendChild(tr);
       });
       
-      // ربط أحداث الصفوف باستخدام addEventListener
+      // ✅ ربط أحداث التحديد باستخدام addEventListener
       document.querySelectorAll('.row-check').forEach(cb => {
         cb.addEventListener('change', function() {
           const id = this.getAttribute('data-id');
@@ -449,6 +419,7 @@
         });
       });
       
+      // ✅ ربط أزرار الإجراءات باستخدام addEventListener
       document.querySelectorAll('.action-btn').forEach(btn => {
         btn.addEventListener('click', function() {
           const id = this.getAttribute('data-id'), action = this.getAttribute('data-action');
@@ -466,43 +437,25 @@
     }
 
     // ========================================
-    // التحقق من القواعد (يعرض تحذير فقط ولا يمنع)
+    // التحقق من القواعد (يعرض تحذير فقط)
     // ========================================
     function checkRules(date, time) {
       const warnings = [];
       const t = T[lang];
       const day = new Date(date).getDay();
-      
-      // التحقق من الأيام المسموحة
-      if(!settings.allowedDays.includes(day)) {
-        warnings.push(t.msg.warnDay);
-      }
-      
-      // التحقق من التواريخ المحظورة
-      if(settings.blocked.includes(date)) {
-        warnings.push(t.msg.warnDate);
-      }
-      
-      // التحقق من وقت الدوام
-      if(time < settings.start || time > settings.end) {
-        warnings.push(t.msg.warnTime);
-      }
-      
-      // التحقق من الفاصل الزمني (15 دقيقة)
+      if(!settings.allowedDays.includes(day)) warnings.push(t.msg.warnDay);
+      if(settings.blocked.includes(date)) warnings.push(t.msg.warnDate);
+      if(time < settings.start || time > settings.end) warnings.push(t.msg.warnTime);
       const dayAppts = data.filter(a => a.appointment_date === date).map(a => a.appointment_time);
       const newM = timeToM(time);
-      for(let t of dayAppts) {
-        if(Math.abs(newM - timeToM(t)) < 15) {
-          warnings.push(t.msg.warnGap);
-          break;
-        }
+      for(let tm of dayAppts) {
+        if(Math.abs(newM - timeToM(tm)) < 15) { warnings.push(t.msg.warnGap); break; }
       }
-      
       return warnings;
     }
 
     // ========================================
-    // إضافة موعد - مع تحذير بدلاً من المنع
+    // إضافة موعد
     // ========================================
     async function handleAdd(e) {
       e.preventDefault();
@@ -510,17 +463,13 @@
       const name = $('aName').value.trim(), phone = $('aPhone').value.trim().replace(/[\s-]/g,''),
             date = $('aDate').value, time = $('aTime').value, status = $('aStatus').value;
       
-      // التحقق من القواعد وعرض التحذيرات
       const warnings = checkRules(date, time);
-      const warningBar = $('warningBar');
-      const warningText = $('warningText');
+      const warningBar = $('warningBar'), warningText = $('warningText');
       
       if(warnings.length > 0) {
         warningText.textContent = warnings.join(' | ');
         warningBar.classList.add('show');
         showToast(warnings.join(' | '), 'warn');
-        
-        // إذا كان هناك تنبيهات، نطلب تأكيد المتابعة
         if(!confirm(t.msg.warnDay + '\n\n' + warnings.join('\n') + '\n\nهل تريد المتابعة؟')) {
           $('btnSave').disabled = false;
           $('btnSaveText').textContent = t.btn.save;
@@ -534,17 +483,11 @@
       btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري...';
       
       try {
-        // ✅ الإدخال في جدول appointments
         const { error } = await supabase.from('appointments').insert([{
-          patient_name: name,
-          phone: phone,
-          appointment_date: date,
-          appointment_time: time,
-          status: status || 'pending',
-          created_at: new Date().toISOString()
+          patient_name: name, phone, appointment_date: date, appointment_time: time,
+          status: status || 'pending', created_at: new Date().toISOString()
         }]);
         if(error) throw error;
-        
         showToast(t.msg.saved, 'success');
         $('apptForm').reset();
         warningBar.classList.remove('show');
@@ -552,7 +495,6 @@
         switchTab('dash');
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
         document.querySelector('.tab[data-tab="dash"]').classList.add('active');
-        
       } catch(err) {
         console.error('Save Error:', err);
         showToast('❌ ' + err.message, 'error');
@@ -685,11 +627,11 @@
     }
 
     // ========================================
-    // إعدادات - تحميل وحفظ من جدول clinic_settings (أونلاين فقط)
+    // إعدادات
     // ========================================
     async function loadSettings() {
       try {
-        const { data: settingsData } = await supabase.from('clinic_settings').select('*').eq('id', 1).single();
+        const {  settingsData } = await supabase.from('clinic_settings').select('*').eq('id', 1).single();
         if(settingsData) {
           settings = {
             allowedDays: settingsData.allowed_days || [0,1,2,3,4],
@@ -702,8 +644,6 @@
         console.warn('Using default settings (offline)', e);
         settings = { allowedDays:[0,1,2,3,4], blocked:[], start:'09:00', end:'17:00' };
       }
-      
-      // تطبيق الإعدادات على الواجهة
       document.querySelectorAll('#set input[type=checkbox]').forEach(cb => {
         cb.checked = settings.allowedDays.includes(parseInt(cb.value));
       });
@@ -716,14 +656,10 @@
       const allowed = Array.from(document.querySelectorAll('#set input[type=checkbox]:checked')).map(c => parseInt(c.value));
       const blocked = $('sBlocked').value.split('\n').filter(l => l.trim());
       const s = { allowedDays: allowed, blocked, start: $('sStart').value, end: $('sEnd').value };
-      
       try {
         await supabase.from('clinic_settings').upsert({
-          id: 1,
-          allowed_days: allowed,
-          blocked_dates: blocked,
-          work_start: s.start,
-          work_end: s.end
+          id: 1, allowed_days: allowed, blocked_dates: blocked,
+          work_start: s.start, work_end: s.end
         }, { onConflict: 'id' });
         settings = s;
         showToast(T[lang].msg.settings, 'success');
@@ -734,16 +670,15 @@
     }
 
     // ========================================
-    // جلب البيانات من جدول appointments (أونلاين فقط)
+    // جلب البيانات
     // ========================================
     async function fetchData() {
       try {
-        const { data: appointments, error } = await supabase
+        const {  appointments, error } = await supabase
           .from('appointments')
           .select('*')
           .order('appointment_date', {ascending:true})
           .order('appointment_time', {ascending:true});
-        
         if(error) throw error;
         data = appointments || [];
         renderTable(data);
@@ -759,7 +694,6 @@
     // دوال مساعدة
     // ========================================
     function timeToM(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
-    
     function showToast(msg, type = 'info') {
       const toast = $('toast');
       $('toastMsg').textContent = msg;
@@ -768,24 +702,27 @@
     }
 
     // ========================================
-    // التهيئة وربط الأحداث باستخدام addEventListener
+    // ✅ التهيئة وربط جميع الأحداث باستخدام addEventListener
     // ========================================
-    window.addEventListener('DOMContentLoaded', async () => {
-      setTheme(theme); 
-      setLang(lang); 
-      await loadSettings(); 
+    document.addEventListener('DOMContentLoaded', async function() {
+      // تطبيق اللغة والسمة
+      setTheme(theme);
+      setLang(lang);
+      await loadSettings();
       await fetchData();
       
-      // ربط التبويبات
-      document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function() { switchTab(this.getAttribute('data-tab')); });
+      // ✅ ربط التبويبات
+      document.querySelectorAll('.tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          switchTab(this.getAttribute('data-tab'));
+        });
       });
       
-      // ربط أزرار التحكم
+      // ✅ ربط أزرار التحكم
       $('themeToggle').addEventListener('click', toggleTheme);
       $('langToggle').addEventListener('click', toggleLang);
       
-      // ربط أزرار الفلاتر
+      // ✅ ربط أزرار الفلاتر
       $('btnFilter').addEventListener('click', applyFilters);
       $('btnReset').addEventListener('click', resetFilters);
       $('btnBatch').addEventListener('click', startBatchWA);
@@ -794,10 +731,10 @@
       $('btnSettings').addEventListener('click', saveSettings);
       $('selectAll').addEventListener('change', toggleSelectAll);
       
-      // ربط نموذج الإضافة
+      // ✅ ربط نموذج الإضافة
       $('apptForm').addEventListener('submit', handleAdd);
       
-      // ربط حقل التاريخ للتحقق الفوري
+      // ✅ ربط حقول التاريخ والوقت للتحقق الفوري
       $('aDate').addEventListener('change', function() {
         const date = this.value, time = $('aTime').value;
         if(date && time) {
@@ -810,7 +747,6 @@
           }
         }
       });
-      
       $('aTime').addEventListener('change', function() {
         const date = $('aDate').value, time = this.value;
         if(date && time) {
@@ -824,10 +760,12 @@
         }
       });
       
-      // ربط نافذة الدفعي
+      // ✅ ربط نافذة الدفعي
       $('btnNextBatch').addEventListener('click', nextBatchItem);
       $('btnCloseBatch').addEventListener('click', closeBatchModal);
-      $('btnCancel').addEventListener('click', () => $('alertModal').classList.remove('show'));
+      $('btnCancel').addEventListener('click', function() {
+        $('alertModal').classList.remove('show');
+      });
     });
   </script>
 </body>
