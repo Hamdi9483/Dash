@@ -2,594 +2,499 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم العيادة | MIS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>عيادة نور | نظام المواعيد المتكامل</title>
+    <!-- Tailwind + Font Awesome -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* 🌙 متغيرات الألوان - الوضع النهاري */
-        :root { 
-            --p:#2563eb; --s:#10b981; --bg:#f8fafc; --card:#fff; 
-            --txt:#0f172a; --brd:#e2e8f0; --err:#ef4444; 
+        /* تخصيص التمرير والترانزیشن */
+        * { transition: background-color 0.2s ease, border-color 0.2s ease; }
+        .dark-transition { transition: background-color 0.3s, color 0.2s; }
+        .toast-msg { animation: fadeInUp 0.3s ease forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        /* 🌑 متغيرات الألوان - الوضع الليلي */
-        [data-theme="dark"] { 
-            --p:#60a5fa; --s:#34d399; --bg:#0f172a; --card:#1e293b; 
-            --txt:#f1f5f9; --brd:#334155; --err:#f87171; 
-        }
-        
-        *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif; transition:background-color 0.3s, color 0.3s, border-color 0.3s}
-        body{background:var(--bg);color:var(--txt);padding:20px;min-height:100vh}
-        .container{max-width:1100px;margin:0 auto}
-        .diag-bar{background:var(--card);padding:10px 16px;border-radius:10px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,0.05);font-size:0.9rem}
-        .status-dot{width:10px;height:10px;border-radius:50%;background:#cbd5e1;margin-left:8px}
-        .status-dot.ok{background:var(--s)}
-        .status-dot.err{background:var(--err);animation:pulse 1.5s infinite}
-        @keyframes pulse{0%{opacity:1}50%{opacity:0.5}100%{opacity:1}}
-        
-        /* ✅ أزرار التحكم */
-        .ctrl-btns { display:flex; gap:8px; align-items:center; }
-        .ctrl-btn { 
-            width:40px; height:40px; border-radius:10px; border:none; 
-            background:var(--card); color:var(--txt); 
-            display:flex; align-items:center; justify-content:center; 
-            cursor:pointer; font-size:1.2rem; 
-            box-shadow:0 2px 6px rgba(0,0,0,0.1);
-            transition:all 0.3s;
-        }
-        .ctrl-btn:hover { background:var(--p); color:#fff; transform:translateY(-2px); }
-        
-        .tabs{display:flex;gap:8px;margin-bottom:20px;background:var(--card);padding:8px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.05)}
-        .tab{padding:10px 18px;border:none;background:transparent;cursor:pointer;border-radius:8px;font-weight:600;color:#64748b;transition:0.2s}
-        .tab.active{background:var(--p);color:#fff}
-        .tab:hover:not(.active){background:#f1f5f9}
-        .panel{display:none;background:var(--card);padding:24px;border-radius:16px;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
-        .panel.active{display:block}
-        h2{margin-bottom:16px;color:var(--p);font-size:1.3rem}
-        .form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
-        .form-group{display:flex;flex-direction:column;gap:6px}
-        label{font-size:0.9rem;font-weight:500;color:#475569}
-        input,select,textarea{padding:10px;border:1.5px solid var(--brd);border-radius:8px;font-size:0.95rem;outline:none;transition:0.2s;background:var(--card);color:var(--txt)}
-        input:focus,select:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,0.1)}
-        .btn{padding:10px 18px;border:none;border-radius:8px;cursor:pointer;font-weight:600;transition:0.2s;display:inline-flex;align-items:center;gap:6px}
-        .btn-primary{background:var(--p);color:#fff}.btn-primary:hover{background:#1d4ed8}
-        .btn-success{background:var(--s);color:#fff}.btn-success:hover{background:#059669}
-        .btn-danger{background:#ef4444;color:#fff}.btn-danger:hover{background:#dc2626}
-        .btn-sec{background:#f1f5f9;color:var(--txt)}.btn-sec:hover{background:#e2e8f0}
-        .filters{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;padding:16px;background:var(--card);border-radius:10px;border:1px solid var(--brd)}
-        .filters input, .filters button{padding:8px 12px;font-size:0.9rem}
-        .table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--brd)}
-        table{width:100%;border-collapse:collapse;min-width:750px}
-        th,td{padding:12px 14px;text-align:right;border-bottom:1px solid var(--brd);font-size:0.9rem}
-        th{background:var(--card);font-weight:600;color:#475569}
-        tr:hover{background:var(--bg)}
-        tr.selected{background:#eff6ff}
-        .actions{display:flex;gap:6px}
-        .badge{padding:4px 8px;border-radius:6px;font-size:0.8rem;font-weight:500}
-        .badge-p{background:#dbeafe;color:#1e40af}.badge-s{background:#dcfce7;color:#166534}
-        .modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:999;backdrop-filter:blur(2px)}
-        .modal.show{display:flex}
-        .modal-box{background:var(--card);padding:24px;border-radius:16px;max-width:500px;width:90%;box-shadow:0 15px 30px rgba(0,0,0,0.15)}
-        .modal-box h3{color:var(--p);margin-bottom:12px;text-align:center}
-        .batch-list{max-height:220px;overflow-y:auto;margin:15px 0;background:var(--card);border-radius:10px;padding:10px}
-        .batch-item{padding:8px;border-bottom:1px solid var(--brd);font-size:0.9rem;display:flex;justify-content:space-between;align-items:center}
-        .batch-item.active{background:#dbeafe;font-weight:600;border-radius:6px}
-        .batch-item.done{opacity:0.5;text-decoration:line-through}
-        .progress-bar{height:6px;background:#e2e8f0;border-radius:3px;margin:12px 0;overflow:hidden}
-        .progress-fill{height:100%;background:var(--s);transition:width 0.3s}
-        .local-badge{background:#fbbf24;color:#78350f;padding:4px 10px;border-radius:20px;font-size:0.75rem;font-weight:700;margin-right:8px}
-        input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--p)}
-        @media(max-width:600px){.tabs{flex-direction:column}.form-grid{grid-template-columns:1fr}.diag-bar{flex-direction:column;gap:8px;text-align:center}.filters{flex-direction:column}}
+        .rtl { direction: rtl; }
+        .ltr { direction: ltr; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="diag-bar">
-            <div>
-                <span id="conn-dot" class="status-dot"></span>
-             
-              
-            </div>
-            <div class="ctrl-btns">
-                <!-- ✅ زر تبديل اللغة -->
-                <button class="ctrl-btn" id="langBtn" title="English" onclick="toggleLang()">🇸🇾</button>
-                <!-- ✅ زر تبديل السمة -->
-                <button class="ctrl-btn" id="themeBtn" title="الوضع الليلي" onclick="toggleTheme()">🌙</button>
-                <button class="btn btn-sec" style="font-size:0.85rem;padding:6px 12px" onclick="toggleLocalMode()">🔄 تبديل وضع التخزين</button>
-            </div>
-        </div>
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('dash')" id="tDash">📊 لوحة المواعيد</button>
-            <button class="tab" onclick="switchTab('add')" id="tAdd">➕ إضافة موعد</button>
-            <button class="tab" onclick="switchTab('set')" id="tSet">⚙️ إعدادات العيادة</button>
-        </div>
-        <div id="dash" class="panel active">
-            <h2 id="hDash">📋 قائمة المواعيد المسجلة</h2>
-            <div class="filters">
-                <input type="date" id="filter-date">
-                <input type="date" id="filter-reg">
-                <button class="btn btn-sec" onclick="applyFilters()" id="bFilter">🔍 تصفية</button>
-                <button class="btn btn-sec" onclick="resetFilters()" id="bReset">🔄 إلغاء</button>
-                <div style="flex:1"></div>
-                <button class="btn btn-success" onclick="startBatchWA()" id="bBatch">📤 إرسال واتساب</button>
-                <button class="btn btn-success" onclick="exportCSV()" id="bExport">📥 تصدير</button>
-                <button class="btn btn-danger" onclick="cleanupOld()" id="bClean">🗑️ حذف</button>
-            </div>
-            <div class="table-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="width:40px;text-align:center"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
-                            <th>#</th><th id="thName">المريض</th><th id="thPhone">الهاتف</th><th id="thDate">الموعد</th><th id="thTime">الوقت</th><th id="thReg">تسجيل</th><th id="thAct">إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="table-body"></tbody>
-                </table>
-            </div>
-        </div>
-        <div id="add" class="panel">
-            <h2 id="hAdd">📅 تسجيل موعد جديد</h2>
-            <form id="appt-form" onsubmit="handleAdd(event)">
-                <div class="form-grid">
-                    <div class="form-group"><label id="lName">اسم المريض</label><input type="text" id="a-name" required></div>
-                    <div class="form-group"><label id="lPhone">رقم الهاتف</label><input type="tel" id="a-phone" placeholder="966501234567" required></div>
-                    <div class="form-group"><label id="lDate">تاريخ الموعد</label><input type="date" id="a-date" required onchange="checkDateConstraints()"></div>
-                    <div class="form-group"><label id="lTime">وقت الموعد</label><input type="time" id="a-time" step="900" required></div>
+<body class="font-sans antialiased rtl dark-transition bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+
+    <div class="max-w-7xl mx-auto px-4 py-5 md:py-7">
+        <!-- Header مع أزرار الوضع الليلي واللغة -->
+        <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-600 dark:bg-emerald-700 p-2.5 rounded-2xl shadow-md">
+                    <i class="fas fa-calendar-check text-white text-xl"></i>
                 </div>
-                <button type="submit" class="btn btn-primary" id="btn-save">💾 حفظ الموعد</button>
-            </form>
+                <h1 id="mainTitle" class="text-2xl md:text-3xl font-extrabold bg-gradient-to-l from-emerald-700 to-blue-700 bg-clip-text text-transparent">نظام إدارة المواعيد</h1>
+            </div>
+            <div class="flex gap-3">
+                <!-- تبديل الوضع الليلي -->
+                <button id="darkModeToggle" class="bg-white dark:bg-gray-800 shadow-md p-2 rounded-full w-10 h-10 flex items-center justify-center hover:scale-105 transition">
+                    <i class="fas fa-moon text-gray-700 dark:text-yellow-300 text-lg"></i>
+                </button>
+                <!-- تبديل اللغة -->
+                <button id="langToggle" class="bg-white dark:bg-gray-800 shadow-md px-4 py-2 rounded-full font-semibold flex items-center gap-2">
+                    <i class="fas fa-globe"></i> <span id="langText">English</span>
+                </button>
+            </div>
         </div>
-        <div id="set" class="panel">
-            <h2 id="hSet">⚙️ إعدادات دوام العيادة</h2>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label id="lDays">الأيام المسموحة</label>
-                    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
-                        <label><input type="checkbox" value="0" checked> <span id="d0">أحد</span></label>
-                        <label><input type="checkbox" value="1" checked> <span id="d1">إثنين</span></label>
-                        <label><input type="checkbox" value="2" checked> <span id="d2">ثلاثاء</span></label>
-                        <label><input type="checkbox" value="3" checked> <span id="d3">أربعاء</span></label>
-                        <label><input type="checkbox" value="4" checked> <span id="d4">خميس</span></label>
-                        <label><input type="checkbox" value="5"> <span id="d5">جمعة</span></label>
-                        <label><input type="checkbox" value="6"> <span id="d6">سبت</span></label>
+
+        <!-- تبويبات الصفحتين (بدلاً من 3، صار عندنا صفحتين: المواعيد والقيود) -->
+        <div class="flex flex-wrap gap-3 mb-7 border-b border-gray-200 dark:border-gray-700 pb-2">
+            <button id="tabAppointmentsBtn" class="tab-btn flex items-center gap-2 px-6 py-2.5 rounded-t-xl font-bold transition-all duration-200 bg-blue-600 text-white shadow">
+                <i class="fas fa-calendar-alt"></i> <span data-key="appointmentsTab">المواعيد والإدارة</span>
+            </button>
+            <button id="tabSettingsBtn" class="tab-btn flex items-center gap-2 px-6 py-2.5 rounded-t-xl font-bold transition-all duration-200 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                <i class="fas fa-sliders-h"></i> <span data-key="settingsTab">القيود والإعدادات</span>
+            </button>
+        </div>
+
+        <!-- ========== صفحة المواعيد ========== -->
+        <div id="appointmentsPanel" class="tab-panel">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden border border-gray-100 dark:border-gray-700">
+                <div class="bg-gradient-to-r from-blue-700 to-indigo-800 dark:from-blue-900 dark:to-indigo-900 px-5 py-4 flex flex-wrap justify-between items-center gap-3">
+                    <div class="flex items-center gap-2 text-white">
+                        <i class="fas fa-list-ul text-xl"></i>
+                        <h2 class="text-xl font-bold" data-key="appointmentsList">جدول المواعيد</h2>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <span class="bg-white/20 text-white text-sm px-3 py-1 rounded-full"><i class="fas fa-chart-line ml-1"></i> <span id="appointmentsCount">0</span> <span data-key="appointment">موعد</span></span>
+                        <button id="refreshAppointmentsBtn" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded-full text-sm"><i class="fas fa-sync-alt ml-1"></i> <span data-key="refresh">تحديث</span></button>
+                        <button id="deleteAllBtn" class="bg-red-600/80 hover:bg-red-700 px-3 py-1 rounded-full text-sm text-white"><i class="fas fa-trash-alt ml-1"></i> <span data-key="deleteAll">حذف الكل</span></button>
+                        <button id="bulkWhatsappBtn" class="bg-green-600/80 hover:bg-green-700 px-3 py-1 rounded-full text-sm text-white"><i class="fab fa-whatsapp ml-1"></i> <span data-key="sendSelected">إرسال للمحددين</span></button>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label id="lBlock">التواريخ المحظورة</label>
-                    <textarea id="s-blocked" rows="3" placeholder="2026-04-10"></textarea>
+                <div class="overflow-x-auto p-4">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                        <thead class="bg-gray-50 dark:bg-gray-900/50">
+                            <tr>
+                                <th class="px-3 py-3 text-center text-xs font-medium uppercase tracking-wider"><input type="checkbox" id="selectAllCheckbox" class="w-4 h-4"></th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" data-key="patient">المريض</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" data-key="phone">الهاتف</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" data-key="date">التاريخ</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" data-key="time">الوقت</th>
+                                <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wider" data-key="status">الحالة</th>
+                                <th class="px-4 py-3 text-center text-xs font-medium uppercase tracking-wider" data-key="actions">إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="appointmentsTableBody" class="bg-white dark:bg-gray-800 divide-y divide-gray-100 dark:divide-gray-700">
+                            <tr><td colspan="7" class="text-center py-12 text-gray-400"><i class="fas fa-spinner fa-spin ml-2"></i> جاري التحميل...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="form-group"><label id="lStart">بداية الدوام</label><input type="time" id="s-start" value="09:00"></div>
-                <div class="form-group"><label id="lEnd">نهاية الدوام</label><input type="time" id="s-end" value="17:00"></div>
             </div>
-            <button class="btn btn-primary" onclick="saveSettings()" id="bSettings">💾 حفظ الإعدادات</button>
+        </div>
+
+        <!-- ========== صفحة القيود والإعدادات ========== -->
+        <div id="settingsPanel" class="tab-panel hidden">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 md:p-8 border border-gray-100 dark:border-gray-700">
+                <div class="flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 pb-4 mb-6">
+                    <i class="fas fa-gavel text-amber-600 text-xl"></i>
+                    <h2 class="text-2xl font-bold" data-key="clinicRules">قيود العيادة وأيام العمل</h2>
+                </div>
+                <form id="settingsForm" class="space-y-8">
+                    <!-- أيام العمل -->
+                    <div>
+                        <label class="block font-semibold mb-3"><i class="fas fa-calendar-week ml-1"></i> <span data-key="workDays">أيام العمل (اختر الأيام المتاحة)</span></label>
+                        <div class="grid grid-cols-2 md:grid-cols-7 gap-3">
+                            <label class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-xl cursor-pointer"><input type="checkbox" value="0" class="day-checkbox w-5 h-5"> الأحد</label>
+                            <label class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-xl cursor-pointer"><input type="checkbox" value="1" class="day-checkbox w-5 h-5"> الإثنين</label>
+                            <label class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-xl cursor-pointer"><input type="checkbox" value="2" class="day-checkbox w-5 h-5"> الثلاثاء</label>
+                            <label class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-xl cursor-pointer"><input type="checkbox" value="3" class="day-checkbox w-5 h-5"> الأربعاء</label>
+                            <label class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-xl cursor-pointer"><input type="checkbox" value="4" class="day-checkbox w-5 h-5"> الخميس</label>
+                            <label class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-xl cursor-pointer"><input type="checkbox" value="5" class="day-checkbox w-5 h-5"> الجمعة</label>
+                            <label class="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 p-3 rounded-xl cursor-pointer"><input type="checkbox" value="6" class="day-checkbox w-5 h-5"> السبت</label>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block font-medium mb-2"><i class="fas fa-hourglass-start"></i> <span data-key="startTime">بداية الدوام</span></label>
+                        <input type="time" id="workStart" class="w-full border rounded-xl px-4 py-3 dark:bg-gray-700 dark:border-gray-600"></div>
+                        <div><label class="block font-medium mb-2"><i class="fas fa-hourglass-end"></i> <span data-key="endTime">نهاية الدوام</span></label>
+                        <input type="time" id="workEnd" class="w-full border rounded-xl px-4 py-3 dark:bg-gray-700 dark:border-gray-600"></div>
+                    </div>
+                    <div>
+                        <label class="block font-medium mb-2"><i class="fas fa-ban"></i> <span data-key="blockedDatesLabel">التواريخ المحظورة (إجازات)</span></label>
+                        <div class="flex flex-wrap gap-3 items-center">
+                            <input type="date" id="blockedDateInput" class="border rounded-xl px-4 py-2 dark:bg-gray-700">
+                            <button type="button" id="addBlockedDateBtn" class="bg-gray-200 dark:bg-gray-600 px-4 py-2 rounded-xl"><i class="fas fa-plus"></i> <span data-key="add">إضافة</span></button>
+                        </div>
+                        <div id="blockedDatesList" class="flex flex-wrap gap-2 mt-4"></div>
+                    </div>
+                    <div class="flex justify-end gap-3">
+                        <button type="button" id="resetSettingsBtn" class="border border-gray-300 dark:border-gray-600 px-6 py-2.5 rounded-xl"><span data-key="reset">إعادة تعيين</span></button>
+                        <button type="submit" class="bg-blue-700 hover:bg-blue-800 text-white px-8 py-2.5 rounded-xl shadow"><i class="fas fa-save ml-1"></i> <span data-key="saveSettings">حفظ الإعدادات</span></button>
+                    </div>
+                </form>
+                <div id="settingsMessage" class="mt-4 text-sm text-center"></div>
+            </div>
         </div>
     </div>
 
-    <div id="alert-modal" class="modal">
-        <div class="modal-box">
-            <h3 id="alertTitle">⚠️ تنبيه: فجوة زمنية</h3>
-            <p id="alert-msg"></p>
-            <div style="display:flex;gap:10px;justify-content:center">
-                <button class="btn btn-primary" onclick="closeAlert(true)" id="bContinue">متابعة</button>
-                <button class="btn btn-sec" onclick="closeAlert(false)" id="bCancel">إلغاء</button>
+    <!-- Modal تعديل الموعد -->
+    <div id="editModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden transition-all">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4" data-key="editAppointment">تعديل الموعد</h3>
+            <input type="hidden" id="editId">
+            <div class="space-y-4">
+                <input type="text" id="editName" placeholder="الاسم" class="w-full border rounded-xl p-3 dark:bg-gray-700">
+                <input type="tel" id="editPhone" placeholder="الهاتف" class="w-full border rounded-xl p-3 dark:bg-gray-700">
+                <input type="date" id="editDate" class="w-full border rounded-xl p-3 dark:bg-gray-700">
+                <input type="time" id="editTime" class="w-full border rounded-xl p-3 dark:bg-gray-700">
+                <select id="editStatus" class="w-full border rounded-xl p-3 dark:bg-gray-700">
+                    <option value="pending">قيد الانتظار</option>
+                    <option value="confirmed">مؤكد</option>
+                    <option value="cancelled">ملغي</option>
+                </select>
             </div>
-        </div>
-    </div>
-
-    <div id="batch-modal" class="modal">
-        <div class="modal-box">
-            <h3 id="batchTitle">📤 إرسال واتساب</h3>
-            <p id="batchHint" style="text-align:center;color:#64748b;font-size:0.9rem;margin-bottom:10px">اضغط التالي للإرسال</p>
-            <div class="progress-bar"><div class="progress-fill" id="batch-progress" style="width:0%"></div></div>
-            <div id="batch-status" style="text-align:center;margin:8px 0;font-weight:600;color:var(--p)"></div>
-            <div class="batch-list" id="batch-list"></div>
-            <div style="display:flex;gap:10px;justify-content:center;margin-top:15px">
-                <button class="btn btn-primary" id="btn-next-batch" onclick="nextBatchItem()"><span id="bNext">التالي</span> ➡️</button>
-                <button class="btn btn-sec" onclick="closeBatchModal()" id="bClose">إغلاق</button>
+            <div class="flex gap-3 mt-6">
+                <button id="saveEditBtn" class="bg-blue-600 text-white flex-1 py-2 rounded-xl">حفظ</button>
+                <button id="closeModalBtn" class="bg-gray-300 dark:bg-gray-600 flex-1 py-2 rounded-xl">إلغاء</button>
             </div>
         </div>
     </div>
 
     <script>
-        // ========================================
-        //  الإعدادات الأصلية
-        // ========================================
+        // ==================== تهيئة Supabase ====================
         const SUPABASE_URL = 'https://ncqvzpcqotdiwjqbwlwp.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_98lfpU1zaqG-MNxkhlvg6g_KEMPMPbS';
-        let db, useLocalMode = false;
-        let allData = [];
-        let selectedIds = new Set();
-        let batchQueue = [], batchIndex = 0;
-        let settings = { allowedDays:[0,1,2,3,4], blockedDates:[], workStart:'09:00', workEnd:'17:00' };
-        let pendingSubmit = false;
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ========================================
-        //  إعدادات اللغة والسمة
-        // ========================================
-        let lang = localStorage.getItem('clinic_lang') || 'ar';
-        let theme = localStorage.getItem('clinic_theme') || 'light';
+        // متغيرات عامة
+        let currentSettings = { allowed_days: [0,1,2,3,4], work_start: '09:00', work_end: '17:00', blocked_dates: [] };
+        let currentLang = 'ar'; // ar / en
+        let selectedAppointments = new Set(); // لتخزين ids المحددة
 
-        // قاموس الترجمات البسيط
-        const T = {
+        // الترجمات
+        const translations = {
             ar: {
-                // أزرار
-                langBtn: '🇸🇾', themeBtn: '🌙', langTitle: 'English', themeTitle: 'الوضع الليلي',
-                // تبويبات
-                tDash: '📊 لوحة المواعيد', tAdd: '➕ إضافة موعد', tSet: '⚙️ إعدادات العيادة',
-                // عناوين
-                hDash: '📋 قائمة المواعيد المسجلة', hAdd: '📅 تسجيل موعد جديد', hSet: '⚙️ إعدادات دوام العيادة',
-                // رؤوس الجدول
-                thName: 'المريض', thPhone: 'الهاتف', thDate: 'الموعد', thTime: 'الوقت', thReg: 'تسجيل', thAct: 'إجراءات',
-                // تسميات
-                lName: 'اسم المريض', lPhone: 'رقم الهاتف', lDate: 'تاريخ الموعد', lTime: 'وقت الموعد',
-                lDays: 'الأيام المسموحة', lBlock: 'التواريخ المحظورة', lStart: 'بداية الدوام', lEnd: 'نهاية الدوام',
-                // أيام
-                d0:'أحد', d1:'إثنين', d2:'ثلاثاء', d3:'أربعاء', d4:'خميس', d5:'جمعة', d6:'سبت',
-                // أزرار
-                bFilter:'🔍 تصفية', bReset:'🔄 إلغاء', bBatch:'📤 إرسال واتساب', bExport:'📥 تصدير', bClean:'🗑️ حذف',
-                btnSave:'💾 حفظ الموعد', bSettings:'💾 حفظ الإعدادات',
-                bContinue:'متابعة', bCancel:'إلغاء', bNext:'التالي', bClose:'إغلاق',
-                // نوافذ
-                alertTitle:'⚠️ تنبيه: فجوة زمنية', batchTitle:'📤 إرسال واتساب', batchHint:'اضغط التالي للإرسال',
-                // رسائل
-                mNoData:'لا توجد مواعيد', mSaved:'✅ تم الحفظ', mErr:'❌ فشل: ', mDel:'✅ تم الحذف', mClean:'✅ تم التنظيف', mSet:'✅ تم حفظ الإعدادات',
-                mSel:'⚠️ حدد موعداً واحداً على الأقل', mGap:'فراغ ≥ 30 دقيقة في:', mGapAll:'جميع الأوقات فارغة',
-                mDay:'⛔ اليوم غير مسموح', mDate:'⛔ التاريخ محظور', mTime:'⛔ الوقت خارج الدوام', mTGap:'⛔ فاصل 15 دقيقة مطلوب',
-                mWA:'⚠️ تعذر فتح واتساب', mCDel:'حذف هذا الموعد؟', mCClean:'حذف الأقدم من 30 يوم؟',
-                mConn:'جاري الفحص...', mLocal:'⚠️ وضع محلي', mCloud:'✅ متصل', mErrConn:'❌ فشل: ',
-                mBadge:'🧪 محلي', mLoc:'🧪 محلي', mCld:'☁️ سحابي', mKeyErr:'⚠️ أدخل مفاتيح Supabase أولاً'
+                mainTitle: "نظام إدارة المواعيد", appointmentsTab: "المواعيد والإدارة", settingsTab: "القيود والإعدادات",
+                appointmentsList: "جدول المواعيد", appointment: "موعد", refresh: "تحديث", deleteAll: "حذف الكل",
+                sendSelected: "إرسال للمحددين", patient: "المريض", phone: "الهاتف", date: "التاريخ", time: "الوقت",
+                status: "الحالة", actions: "إجراءات", editAppointment: "تعديل الموعد", clinicRules: "قيود العيادة",
+                workDays: "أيام العمل", startTime: "بداية الدوام", endTime: "نهاية الدوام", blockedDatesLabel: "التواريخ المحظورة",
+                add: "إضافة", reset: "إعادة تعيين", saveSettings: "حفظ الإعدادات", warningPrefix: "تنبيه: ",
+                duplicateWarning: "موعد مكرر في نفس الوقت", dayOffWarning: "هذا اليوم ليس يوم عمل", timeWarning: "الوقت خارج ساعات الدوام",
+                blockedWarning: "هذا التاريخ محظور", sendWhatsapp: "إرسال واتساب", edit: "تعديل", delete: "حذف"
             },
             en: {
-                // Buttons
-                langBtn: '🇬🇧', themeBtn: '☀️', langTitle: 'العربية', themeTitle: 'Dark Mode',
-                // Tabs
-                tDash: '📊 Appointments', tAdd: '➕ Add Appointment', tSet: '⚙️ Settings',
-                // Headers
-                hDash: '📋 Appointments List', hAdd: '📅 New Appointment', hSet: '⚙️ Clinic Settings',
-                // Table
-                thName: 'Patient', thPhone: 'Phone', thDate: 'Date', thTime: 'Time', thReg: 'Registered', thAct: 'Actions',
-                // Labels
-                lName: 'Patient Name', lPhone: 'Phone Number', lDate: 'Appointment Date', lTime: 'Appointment Time',
-                lDays: 'Allowed Days', lBlock: 'Blocked Dates', lStart: 'Work Start', lEnd: 'Work End',
-                // Days
-                d0:'Sun', d1:'Mon', d2:'Tue', d3:'Wed', d4:'Thu', d5:'Fri', d6:'Sat',
-                // Buttons
-                bFilter:'🔍 Filter', bReset:'🔄 Reset', bBatch:'📤 WhatsApp', bExport:'📥 Export', bClean:'🗑️ Delete',
-                btnSave:'💾 Save', bSettings:'💾 Save Settings',
-                bContinue:'Continue', bCancel:'Cancel', bNext:'Next', bClose:'Close',
-                // Modals
-                alertTitle:'⚠️ Time Gap Alert', batchTitle:'📤 WhatsApp Send', batchHint:'Click Next to send',
-                // Messages
-                mNoData:'No appointments', mSaved:'✅ Saved', mErr:'❌ Error: ', mDel:'✅ Deleted', mClean:'✅ Cleaned', mSet:'✅ Settings saved',
-                mSel:'⚠️ Select at least one', mGap:'Gap ≥ 30min at:', mGapAll:'All times free',
-                mDay:'⛔ Day not allowed', mDate:'⛔ Date blocked', mTime:'⛔ Time outside hours', mTGap:'⛔ 15min gap required',
-                mWA:'⚠️ Could not open WhatsApp', mCDel:'Delete this appointment?', mCClean:'Delete older than 30 days?',
-                mConn:'Checking...', mLocal:'⚠️ Local Mode', mCloud:'✅ Connected', mErrConn:'❌ Error: ',
-                mBadge:'🧪 Local', mLoc:'🧪 Local', mCld:'☁️ Cloud', mKeyErr:'⚠️ Enter Supabase keys first'
+                mainTitle: "Clinic Appointment System", appointmentsTab: "Appointments & Actions", settingsTab: "Rules & Settings",
+                appointmentsList: "Appointments List", appointment: "appointment", refresh: "Refresh", deleteAll: "Delete All",
+                sendSelected: "WhatsApp Selected", patient: "Patient", phone: "Phone", date: "Date", time: "Time",
+                status: "Status", actions: "Actions", editAppointment: "Edit Appointment", clinicRules: "Clinic Constraints",
+                workDays: "Working Days", startTime: "Start Time", endTime: "End Time", blockedDatesLabel: "Blocked Dates",
+                add: "Add", reset: "Reset", saveSettings: "Save Settings", warningPrefix: "Warning: ",
+                duplicateWarning: "Duplicate appointment time", dayOffWarning: "This day is not a working day",
+                timeWarning: "Time outside working hours", blockedWarning: "This date is blocked", sendWhatsapp: "WhatsApp",
+                edit: "Edit", delete: "Delete"
             }
         };
 
-        // ========================================
-        //  دوال تبديل اللغة والسمة
-        // ========================================
-        function setLang(l) {
-            const t = T[l];
-            document.documentElement.lang = l;
-            document.documentElement.dir = l === 'ar' ? 'rtl' : 'ltr';
-            
-            // تحديث النصوص مباشرة بالـ ID
-            const ids = ['langBtn','themeBtn','tDash','tAdd','tSet','hDash','hAdd','hSet',
-                        'thName','thPhone','thDate','thTime','thReg','thAct',
-                        'lName','lPhone','lDate','lTime','lDays','lBlock','lStart','lEnd',
-                        'd0','d1','d2','d3','d4','d5','d6',
-                        'bFilter','bReset','bBatch','bExport','bClean','btnSave','bSettings',
-                        'bContinue','bCancel','bNext','bClose',
-                        'alertTitle','batchTitle','batchHint',
-                        'conn-text','local-badge'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if (el && t[id]) {
-                    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                        el.placeholder = t[id];
-                    } else if (el.title !== undefined) {
-                        el.title = t[id+'Title'] || t[id];
-                    } else {
-                        el.textContent = t[id];
-                    }
+        function t(key) { return translations[currentLang][key] || key; }
+
+        // تحديث واجهة النصوص
+        function updateUILanguage() {
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if (key) el.innerText = t(key);
+            });
+            document.getElementById('mainTitle').innerText = t('mainTitle');
+            document.getElementById('langText').innerText = currentLang === 'ar' ? 'English' : 'العربية';
+            // تحديث الأزرار في الجدول سيتم إعادة رسم الجدول
+            fetchAndDisplayAppointments();
+        }
+
+        // ========== دوال مساعدة عامة ==========
+        function showToast(message, type = 'info') {
+            const toastDiv = document.createElement('div');
+            toastDiv.className = `fixed bottom-5 left-5 z-50 toast-msg bg-${type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue'}-600 text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 text-sm font-medium rtl`;
+            toastDiv.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}`;
+            document.body.appendChild(toastDiv);
+            setTimeout(() => toastDiv.remove(), 4000);
+        }
+
+        // تحويل رقم 05xxxx إلى 9665xxxx لواتساب
+        function formatPhoneForWhatsapp(phone) {
+            let raw = phone.replace(/\s+/g, '').replace(/^0+/, '');
+            if (raw.startsWith('5') && raw.length === 9) return '966' + raw;
+            if (raw.startsWith('9665')) return raw;
+            return raw;
+        }
+
+        // فتح واتساب لرقم معين مع رسالة
+        function sendWhatsapp(phone, patientName, date, time) {
+            const formattedPhone = formatPhoneForWhatsapp(phone);
+            const msg = `مرحباً ${patientName}، موعدك في العيادة يوم ${date} الساعة ${time}. شكراً لثقتكم.`;
+            const url = `https://web.whatsapp.com/send?phone=${formattedPhone}&text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+
+        // التحقق من القيود وعرض تحذيرات (دون منع)
+        async function validateWithWarnings(date, time) {
+            const day = new Date(date).getDay();
+            const warnings = [];
+            if (!currentSettings.allowed_days.includes(day)) warnings.push(t('dayOffWarning'));
+            if (time < currentSettings.work_start || time > currentSettings.work_end) warnings.push(t('timeWarning'));
+            if (currentSettings.blocked_dates.includes(date)) warnings.push(t('blockedWarning'));
+            // التحقق من التكرار
+            const { data: duplicate, error } = await supabase.from('appointments').select('id').eq('appointment_date', date).eq('appointment_time', time);
+            if (!error && duplicate && duplicate.length > 0) warnings.push(t('duplicateWarning'));
+            if (warnings.length) {
+                showToast(t('warningPrefix') + warnings.join(' - '), 'error');
+            }
+            return warnings;
+        }
+
+        // ========== جلب المواعيد وعرضها ==========
+        async function fetchAndDisplayAppointments() {
+            try {
+                const { data, error } = await supabase.from('appointments').select('*').order('appointment_date', { ascending: true }).order('appointment_time', { ascending: true });
+                if (error) throw error;
+                document.getElementById('appointmentsCount').innerText = data.length;
+                const tbody = document.getElementById('appointmentsTableBody');
+                if (!data.length) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-12 text-gray-400">${currentLang === 'ar' ? 'لا توجد مواعيد' : 'No appointments'}</td></tr>`;
+                    return;
                 }
+                tbody.innerHTML = data.map(app => `
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition">
+                        <td class="px-3 py-3 text-center"><input type="checkbox" class="appointment-checkbox" data-id="${app.id}" ${selectedAppointments.has(app.id) ? 'checked' : ''}></td>
+                        <td class="px-4 py-3 font-medium">${escapeHtml(app.patient_name)}</td>
+                        <td class="px-4 py-3 dir-ltr">${escapeHtml(app.phone)}</td>
+                        <td class="px-4 py-3">${formatDate(app.appointment_date)}</td>
+                        <td class="px-4 py-3">${app.appointment_time.slice(0,5)}</td>
+                        <td class="px-4 py-3">
+                            <select data-id="${app.id}" class="status-select border rounded-lg px-2 py-1 text-sm bg-gray-50 dark:bg-gray-700">
+                                <option value="pending" ${app.status === 'pending' ? 'selected' : ''}>${currentLang === 'ar' ? 'قيد الانتظار' : 'Pending'}</option>
+                                <option value="confirmed" ${app.status === 'confirmed' ? 'selected' : ''}>${currentLang === 'ar' ? 'مؤكد' : 'Confirmed'}</option>
+                                <option value="cancelled" ${app.status === 'cancelled' ? 'selected' : ''}>${currentLang === 'ar' ? 'ملغي' : 'Cancelled'}</option>
+                            </select>
+                        </td>
+                        <td class="px-4 py-3 flex gap-2 justify-center">
+                            <button class="edit-appointment text-blue-600 hover:text-blue-800" data-id="${app.id}" data-name="${escapeHtml(app.patient_name)}" data-phone="${escapeHtml(app.phone)}" data-date="${app.appointment_date}" data-time="${app.appointment_time}" data-status="${app.status}"><i class="fas fa-edit"></i></button>
+                            <button class="delete-appointment text-red-600 hover:text-red-800" data-id="${app.id}"><i class="fas fa-trash-alt"></i></button>
+                            <button class="whatsapp-single text-green-600 hover:text-green-800" data-phone="${escapeHtml(app.phone)}" data-name="${escapeHtml(app.patient_name)}" data-date="${formatDate(app.appointment_date)}" data-time="${app.appointment_time.slice(0,5)}"><i class="fab fa-whatsapp"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+                // إعادة ربط الأحداث
+                attachTableEvents();
+                updateSelectAllCheckbox();
+            } catch (err) { console.error(err); showToast("خطأ في تحميل المواعيد", "error"); }
+        }
+
+        function attachTableEvents() {
+            document.querySelectorAll('.status-select').forEach(sel => {
+                sel.removeEventListener('change', handleStatusChange);
+                sel.addEventListener('change', handleStatusChange);
             });
-            
-            // تحديث أزرار التحكم
-            document.getElementById('langBtn').textContent = t.langBtn;
-            document.getElementById('langBtn').title = t.langTitle;
-            document.getElementById('themeBtn').textContent = t.themeBtn;
-            document.getElementById('themeBtn').title = t.themeTitle;
-            
-            localStorage.setItem('clinic_lang', l);
-            renderTable(allData);
-        }
-
-        function toggleLang() {
-            lang = lang === 'ar' ? 'en' : 'ar';
-            setLang(lang);
-        }
-
-        function setTheme(t) {
-            document.documentElement.setAttribute('data-theme', t);
-            const btn = document.getElementById('themeBtn');
-            btn.textContent = t === 'dark' ? T[lang].themeBtn : (lang === 'ar' ? '🌙' : '☀️');
-            btn.title = T[lang].themeTitle;
-            localStorage.setItem('clinic_theme', t);
-        }
-
-        function toggleTheme() {
-            theme = theme === 'dark' ? 'light' : 'dark';
-            setTheme(theme);
-        }
-
-        // ========================================
-        // 🚀 التهيئة
-        // ========================================
-        window.addEventListener('DOMContentLoaded', async () => {
-            // تطبيق اللغة والسمة المحفوظة أولاً
-            setLang(lang);
-            setTheme(theme);
-            // ثم تهيئة الباقي
-            initConnection(); 
-            loadSettings(); 
-            await fetchData();
-        });
-
-        // ========================================
-        //  باقي الكود الأصلي (بدون تغيير)
-        // ========================================
-        function initConnection() {
-            const dot = document.getElementById('conn-dot'), txt = document.getElementById('conn-text');
-            const t = T[lang];
-            if (SUPABASE_URL.includes('YOUR_') || SUPABASE_KEY.includes('YOUR_')) {
-                useLocalMode = true; dot.className = 'status-dot err';
-                txt.textContent = t.mLocal;
-                document.getElementById('local-badge').style.display = 'inline';
-                document.getElementById('local-badge').textContent = t.mBadge;
-            } else {
-                db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-                db.from('appointments').select('count', {count:'exact', head:true}).then(({error}) => {
-                    if (error) { useLocalMode = true; dot.className = 'status-dot err';
-                        txt.textContent = t.mErrConn + error.message;
-                        document.getElementById('local-badge').style.display = 'inline';
-                        document.getElementById('local-badge').textContent = t.mBadge;
-                    } else { dot.className = 'status-dot ok'; txt.textContent = t.mCloud; }
-                });
-            }
-        }
-
-        function toggleLocalMode() {
-            const t = T[lang];
-            if (SUPABASE_URL.includes('YOUR_')) { alert(t.mKeyErr); return; }
-            useLocalMode = !useLocalMode;
-            document.getElementById('local-badge').style.display = useLocalMode ? 'inline' : 'none';
-            document.getElementById('conn-text').textContent = useLocalMode ? t.mLoc : t.mCld;
-            document.getElementById('conn-dot').className = useLocalMode ? 'status-dot err' : 'status-dot ok';
-            fetchData();
-        }
-
-        function switchTab(id) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelector(`.tab[onclick="switchTab('${id}')"]`).classList.add('active');
-            document.getElementById(id).classList.add('active');
-        }
-
-        async function fetchData() {
-            if (useLocalMode) { allData = JSON.parse(localStorage.getItem('clinic_appts') || '[]'); renderTable(allData); return; }
-            const { data, error } = await db.from('appointments').select('*').order('appointment_date', {ascending:true}).order('appointment_time', {ascending:true});
-            if(error) { console.error('Fetch Error:', error); allData = JSON.parse(localStorage.getItem('clinic_appts') || '[]'); }
-            else { allData = data || []; }
-            renderTable(allData);
-        }
-
-        function renderTable(data) {
-            const tbody = document.getElementById('table-body'); 
-            tbody.innerHTML = '';
-            const t = T[lang];
-            if(!data.length) { 
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#64748b">'+t.mNoData+'</td></tr>'; 
-                return; 
-            }
-            data.forEach((r,i) => {
-                const tr = document.createElement('tr');
-                if(selectedIds.has(r.id)) tr.classList.add('selected');
-                tr.innerHTML = `
-                    <td style="text-align:center"><input type="checkbox" class="appt-check" value="${r.id}" ${selectedIds.has(r.id)?'checked':''} onchange="toggleSelect('${r.id}')"></td>
-                    <td>${i+1}</td><td><strong>${r.patient_name}</strong></td><td dir="ltr">${r.phone}</td>
-                    <td>${r.appointment_date}</td><td><span class="badge badge-p">${r.appointment_time}</span></td>
-                    <td style="font-size:0.85rem;color:#64748b">${new Date(r.created_at||Date.now()).toLocaleDateString(lang === 'ar' ? 'ar' : 'en-US')}</td>
-                    <td class="actions">
-                        <button class="btn btn-success" onclick="openWA('${r.phone}','${r.patient_name}','${r.appointment_date}','${r.appointment_time}')">💬 WA</button>
-                        <button class="btn btn-danger" onclick="deleteAppt('${r.id}')" style="padding:6px 10px;font-size:0.8rem">🗑️</button>
-                    </td>`;
-                tbody.appendChild(tr);
+            document.querySelectorAll('.delete-appointment').forEach(btn => {
+                btn.removeEventListener('click', handleDelete);
+                btn.addEventListener('click', handleDelete);
             });
+            document.querySelectorAll('.edit-appointment').forEach(btn => {
+                btn.removeEventListener('click', handleEdit);
+                btn.addEventListener('click', handleEdit);
+            });
+            document.querySelectorAll('.whatsapp-single').forEach(btn => {
+                btn.removeEventListener('click', handleWhatsapp);
+                btn.addEventListener('click', handleWhatsapp);
+            });
+            document.querySelectorAll('.appointment-checkbox').forEach(cb => {
+                cb.removeEventListener('change', handleCheckboxChange);
+                cb.addEventListener('change', handleCheckboxChange);
+            });
+        }
+
+        function handleStatusChange(e) { updateStatus(e.target.getAttribute('data-id'), e.target.value); }
+        async function updateStatus(id, newStatus) {
+            await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
+            showToast(currentLang === 'ar' ? 'تم تحديث الحالة' : 'Status updated', 'success');
+            fetchAndDisplayAppointments();
+        }
+        async function handleDelete(e) { const id = e.currentTarget.getAttribute('data-id'); if (confirm(currentLang === 'ar' ? 'حذف الموعد؟' : 'Delete appointment?')) { await supabase.from('appointments').delete().eq('id', id); showToast('تم الحذف', 'success'); fetchAndDisplayAppointments(); } }
+        function handleEdit(e) {
+            const btn = e.currentTarget;
+            document.getElementById('editId').value = btn.getAttribute('data-id');
+            document.getElementById('editName').value = btn.getAttribute('data-name');
+            document.getElementById('editPhone').value = btn.getAttribute('data-phone');
+            document.getElementById('editDate').value = btn.getAttribute('data-date');
+            document.getElementById('editTime').value = btn.getAttribute('data-time');
+            document.getElementById('editStatus').value = btn.getAttribute('data-status');
+            document.getElementById('editModal').classList.remove('hidden');
+        }
+        function handleWhatsapp(e) {
+            const btn = e.currentTarget;
+            sendWhatsapp(btn.getAttribute('data-phone'), btn.getAttribute('data-name'), btn.getAttribute('data-date'), btn.getAttribute('data-time'));
+        }
+        function handleCheckboxChange(e) {
+            const id = e.currentTarget.getAttribute('data-id');
+            if (e.target.checked) selectedAppointments.add(id);
+            else selectedAppointments.delete(id);
             updateSelectAllCheckbox();
         }
-
-        function toggleSelect(id) {
-            if(selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id);
-            renderTable(allData);
-        }
-        function toggleSelectAll() {
-            const isChecked = document.getElementById('select-all').checked;
-            const visibleIds = allData.map(a => a.id);
-            if(isChecked) visibleIds.forEach(id => selectedIds.add(id));
-            else visibleIds.forEach(id => selectedIds.delete(id));
-            renderTable(allData);
-        }
         function updateSelectAllCheckbox() {
-            const visibleIds = allData.map(a => a.id);
-            const allSelected = visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
-            document.getElementById('select-all').checked = allSelected;
+            const allCb = document.querySelectorAll('.appointment-checkbox');
+            const selectAll = document.getElementById('selectAllCheckbox');
+            if (selectAll) selectAll.checked = allCb.length > 0 && Array.from(allCb).every(cb => cb.checked);
         }
 
-        async function handleAdd(e) {
-            e.preventDefault();
-            const t = T[lang];
-            const name = document.getElementById('a-name').value.trim(), phone = document.getElementById('a-phone').value.trim().replace(/[\s-]/g,''), date = document.getElementById('a-date').value, time = document.getElementById('a-time').value;
-            if(!validate(date,time)) return;
-            const btn = document.getElementById('btn-save'); btn.disabled = true; btn.textContent = '⏳...';
-            const newRecord = { id: useLocalMode ? crypto.randomUUID() : undefined, patient_name: name, phone, appointment_date: date, appointment_time: time, created_at: new Date().toISOString(), status: 'pending' };
-            try {
-                if (useLocalMode) { const local = JSON.parse(localStorage.getItem('clinic_appts') || '[]'); local.push(newRecord); localStorage.setItem('clinic_appts', JSON.stringify(local)); allData = local; }
-                else { const { error } = await db.from('appointments').insert([newRecord]); if (error) throw error; }
-                alert(t.mSaved); document.getElementById('appt-form').reset(); await fetchData(); switchTab('dash');
-            } catch (err) { alert(t.mErr + err.message); console.error(err); }
-            finally { btn.disabled = false; btn.textContent = t.btnSave; }
+        // حذف جميع المواعيد
+        async function deleteAllAppointments() {
+            if (!confirm(currentLang === 'ar' ? '⚠️ حذف جميع المواعيد نهائياً؟ لا يمكن التراجع' : 'Delete ALL appointments permanently?')) return;
+            const { error } = await supabase.from('appointments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+            if (error) showToast('فشل الحذف', 'error');
+            else { showToast('تم حذف جميع المواعيد', 'success'); fetchAndDisplayAppointments(); selectedAppointments.clear(); }
         }
 
-        function validate(date, time) {
-            const t = T[lang];
-            const day = new Date(date).getDay();
-            if(!settings.allowedDays.includes(day)) { alert(t.mDay); return false; }
-            if(settings.blockedDates.includes(date)) { alert(t.mDate); return false; }
-            if(time < settings.workStart || time > settings.workEnd) { alert(t.mTime); return false; }
-            const dayAppts = allData.filter(a=>a.appointment_date===date).map(a=>a.appointment_time), newM = timeToM(time);
-            for(let tm of dayAppts) { if(Math.abs(newM - timeToM(tm)) < 15) { alert(t.mTGap); return false; } }
-            return true;
-        }
-
-        function checkDateConstraints() {
-            const date = document.getElementById('a-date').value; if(!date) return;
-            const t = T[lang];
-            const gaps = getGaps(date); if(gaps.length > 0) {
-                document.getElementById('alert-msg').innerHTML = t.mGap+'<br><b>'+gaps.join('<br>')+'</b>';
-                document.getElementById('alert-modal').classList.add('show'); pendingSubmit = true;
-            }
-        }
-
-        function getGaps(date) {
-            let times = allData.filter(a=>a.appointment_date===date).map(a=>a.appointment_time).sort();
-            const start = timeToM(settings.workStart), end = timeToM(settings.workEnd), gaps = [];
-            const t = T[lang];
-            if(times.length===0) return [t.mGapAll];
-            if(timeToM(times[0]) - start >= 30) gaps.push(lang==='ar' ? `بداية الدوام حتى ${times[0]}` : `Start to ${times[0]}`);
-            for(let i=0;i<times.length-1;i++) { if(timeToM(times[i+1]) - timeToM(times[i]) >= 30) gaps.push(lang==='ar' ? `بين ${times[i]} و ${times[i+1]}` : `${times[i]}-${times[i+1]}`); }
-            if(end - timeToM(times[times.length-1]) >= 30) gaps.push(lang==='ar' ? `${times[times.length-1]} حتى النهاية` : `${times[times.length-1]}-End`);
-            return gaps;
-        }
-
-        function closeAlert(continueAction) {
-            document.getElementById('alert-modal').classList.remove('show');
-            if(continueAction && pendingSubmit) { document.getElementById('appt-form').dispatchEvent(new Event('submit')); pendingSubmit=false; }
-        }
-
-        function openWA(phone, name, date, time) {
-            const t = T[lang];
-            let cleanPhone = phone.replace(/[\s\-\+\(\)]/g, '');
-            if (cleanPhone.startsWith('0')) { cleanPhone = '966' + cleanPhone.slice(1); }
-            const message = lang === 'ar' 
-                ? `*موعد عيادة*\n\n👤 ${name}\n📅 ${date}\n🕐 ${time}\n\nشكراً 🙏`
-                : `*Clinic Appointment*\n\n👤 ${name}\n📅 ${date}\n🕐 ${time}\n\nThank you 🙏`;
-            const encodedMsg = encodeURIComponent(message);
-            const waUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
-            const waWindow = window.open(waUrl, 'wa_clinic_tab', 'noopener,noreferrer');
-            if (!waWindow || waWindow.closed || typeof waWindow.closed === 'undefined') {
-                try { const existing = window.open('', 'wa_clinic_tab'); if(existing && !existing.closed) { existing.location.href = waUrl; existing.focus(); return; } } catch(e){}
-                if(confirm(t.mWA)) window.open(waUrl, '_blank');
-            } else { waWindow.focus(); }
-        }
-
-        function startBatchWA() {
-            const t = T[lang];
-            if(selectedIds.size === 0) return alert(t.mSel);
-            batchQueue = Array.from(selectedIds).map(id => allData.find(a => a.id === id)).filter(Boolean);
-            batchIndex = 0;
-            renderBatchList();
-            document.getElementById('batch-modal').classList.add('show');
-            updateBatchProgress();
-        }
-
-        function renderBatchList() {
-            const list = document.getElementById('batch-list'); list.innerHTML = '';
-            batchQueue.forEach((appt, idx) => {
-                const div = document.createElement('div');
-                div.className = `batch-item ${idx === batchIndex ? 'active' : ''} ${idx < batchIndex ? 'done' : ''}`;
-                div.innerHTML = `<span>👤 ${appt.patient_name}</span><span dir="ltr">${appt.phone}</span>`;
-                list.appendChild(div);
+        // إرسال واتساب للمحددين
+        function sendBulkWhatsapp() {
+            const selectedRows = [];
+            document.querySelectorAll('.appointment-checkbox:checked').forEach(cb => {
+                const row = cb.closest('tr');
+                const phone = row.querySelector('.whatsapp-single')?.getAttribute('data-phone');
+                const name = row.querySelector('.whatsapp-single')?.getAttribute('data-name');
+                const date = row.querySelector('.whatsapp-single')?.getAttribute('data-date');
+                const time = row.querySelector('.whatsapp-single')?.getAttribute('data-time');
+                if (phone && name) selectedRows.push({ phone, name, date, time });
             });
+            if (selectedRows.length === 0) { showToast(currentLang === 'ar' ? 'اختر مواعيد أولاً' : 'Select appointments first', 'error'); return; }
+            if (selectedRows.length > 3 && !confirm(currentLang === 'ar' ? `سيتم فتح ${selectedRows.length} نافذة واتساب. قد يمنع المتصفح النوافذ المنبثقة. متابعة؟` : `Will open ${selectedRows.length} WhatsApp windows. Allow popups?`)) return;
+            for (let app of selectedRows) sendWhatsapp(app.phone, app.name, app.date, app.time);
         }
 
-        function nextBatchItem() {
-            const t = T[lang];
-            if(batchIndex >= batchQueue.length) { closeBatchModal(); return; }
-            const appt = batchQueue[batchIndex];
-            openWA(appt.phone, appt.patient_name, appt.appointment_date, appt.appointment_time);
-            batchIndex++;
-            renderBatchList();
-            updateBatchProgress();
-            if(batchIndex >= batchQueue.length) {
-                document.getElementById('batch-status').textContent = lang === 'ar' ? '✅ اكتمل!' : '✅ Done!';
-                document.getElementById('btn-next-batch').onclick = closeBatchModal;
-                document.getElementById('bNext').textContent = t.bClose;
+        // ========== إدارة الإعدادات (القيود) ==========
+        async function fetchSettings() {
+            const { data, error } = await supabase.from('clinic_settings').select('*').eq('id', 1).maybeSingle();
+            if (error) console.error(error);
+            if (data) {
+                currentSettings.allowed_days = data.allowed_days || [0,1,2,3,4];
+                currentSettings.work_start = data.work_start || '09:00';
+                currentSettings.work_end = data.work_end || '17:00';
+                currentSettings.blocked_dates = data.blocked_dates || [];
             } else {
-                document.getElementById('batch-status').textContent = lang === 'ar' ? `جاهز: ${batchQueue[batchIndex].patient_name}` : `Ready: ${batchQueue[batchIndex].patient_name}`;
+                const def = { id: 1, allowed_days: [0,1,2,3,4], work_start: '09:00', work_end: '17:00', blocked_dates: [] };
+                await supabase.from('clinic_settings').insert(def);
+                currentSettings = { allowed_days: def.allowed_days, work_start: def.work_start, work_end: def.work_end, blocked_dates: def.blocked_dates };
             }
+            updateSettingsUI();
+        }
+        function updateSettingsUI() {
+            document.querySelectorAll('.day-checkbox').forEach(cb => { cb.checked = currentSettings.allowed_days.includes(parseInt(cb.value)); });
+            document.getElementById('workStart').value = currentSettings.work_start.slice(0,5);
+            document.getElementById('workEnd').value = currentSettings.work_end.slice(0,5);
+            const container = document.getElementById('blockedDatesList');
+            container.innerHTML = '';
+            currentSettings.blocked_dates.forEach(date => {
+                const badge = document.createElement('span'); badge.className = 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-3 py-1 rounded-full text-sm flex items-center gap-2';
+                badge.innerHTML = `${date} <button type="button" class="remove-blocked-date hover:text-red-600" data-date="${date}"><i class="fas fa-times-circle"></i></button>`;
+                container.appendChild(badge);
+            });
+            document.querySelectorAll('.remove-blocked-date').forEach(btn => btn.addEventListener('click', (e) => { const d = btn.getAttribute('data-date'); currentSettings.blocked_dates = currentSettings.blocked_dates.filter(x => x !== d); updateSettingsUI(); }));
+        }
+        async function saveSettings() {
+            const allowedDays = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(cb => parseInt(cb.value));
+            const workStart = document.getElementById('workStart').value, workEnd = document.getElementById('workEnd').value;
+            const newSet = { allowed_days: allowedDays, work_start: workStart, work_end: workEnd, blocked_dates: currentSettings.blocked_dates };
+            const { error } = await supabase.from('clinic_settings').upsert({ id: 1, ...newSet });
+            if (error) { showToast('فشل الحفظ', 'error'); } else { currentSettings = { ...newSet }; showToast('تم حفظ القيود', 'success'); }
+        }
+        function resetSettingsToDefault() {
+            currentSettings = { allowed_days: [0,1,2,3,4], work_start: '09:00', work_end: '17:00', blocked_dates: [] };
+            updateSettingsUI();
+            showToast(currentLang === 'ar' ? 'تمت إعادة التعيين (لم يحفظ بعد)' : 'Reset to default (not saved)', 'info');
         }
 
-        function updateBatchProgress() {
-            const pct = batchQueue.length ? (batchIndex / batchQueue.length) * 100 : 0;
-            document.getElementById('batch-progress').style.width = pct + '%';
+        // ========== إضافة موعد جديد (مع تحذيرات فقط) ==========
+        document.getElementById('newAppointmentForm')?.remove(); // سنضيف النموذج في صفحة المواعيد - نضيفه ديناميكياً في أعلى صفحة المواعيد
+        // نضيف form للإضافة داخل appointmentsPanel
+        const addFormHtml = `<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-5 mb-6 border">
+            <h3 class="text-xl font-bold mb-3"><i class="fas fa-plus-circle text-green-600"></i> <span data-key="newAppointment">تسجيل موعد جديد</span></h3>
+            <form id="newAppointmentForm" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <input type="text" id="patientName" placeholder="${currentLang === 'ar' ? 'الاسم الكامل' : 'Full name'}" class="border rounded-xl p-2 dark:bg-gray-700" required>
+                <input type="tel" id="phone" placeholder="${currentLang === 'ar' ? 'الهاتف' : 'Phone'}" class="border rounded-xl p-2 dark:bg-gray-700" required>
+                <input type="date" id="appointmentDate" class="border rounded-xl p-2 dark:bg-gray-700" required>
+                <input type="time" id="appointmentTime" class="border rounded-xl p-2 dark:bg-gray-700" required>
+                <button type="submit" class="bg-blue-600 text-white rounded-xl py-2 col-span-full md:col-span-1">${currentLang === 'ar' ? 'حفظ الموعد' : 'Save Appointment'}</button>
+            </form>
+            <div id="newAppointmentMsg" class="mt-2 text-sm"></div>
+        </div>`;
+        document.getElementById('appointmentsPanel').insertAdjacentHTML('afterbegin', addFormHtml);
+
+        async function handleNewAppointment(e) {
+            e.preventDefault();
+            const patient_name = document.getElementById('patientName').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const appointment_date = document.getElementById('appointmentDate').value;
+            const appointment_time = document.getElementById('appointmentTime').value;
+            if (!patient_name || !phone || !appointment_date || !appointment_time) { showToast('يرجى ملء جميع الحقول', 'error'); return; }
+            // تحذيرات فقط وليس منع
+            await validateWithWarnings(appointment_date, appointment_time);
+            // دائماً نقوم بالإدراج
+            const { error } = await supabase.from('appointments').insert([{ patient_name, phone, appointment_date, appointment_time, status: 'pending' }]);
+            if (error) showToast('فشل الإضافة: ' + error.message, 'error');
+            else { showToast('تم إضافة الموعد بنجاح', 'success'); document.getElementById('newAppointmentForm').reset(); fetchAndDisplayAppointments(); }
         }
 
-        function closeBatchModal() {
-            document.getElementById('batch-modal').classList.remove('show');
-            selectedIds.clear(); renderTable(allData);
-        }
+        // ========== تعديل الموعد (modal) ==========
+        document.getElementById('saveEditBtn').onclick = async () => {
+            const id = document.getElementById('editId').value;
+            const patient_name = document.getElementById('editName').value;
+            const phone = document.getElementById('editPhone').value;
+            const appointment_date = document.getElementById('editDate').value;
+            const appointment_time = document.getElementById('editTime').value;
+            const status = document.getElementById('editStatus').value;
+            await supabase.from('appointments').update({ patient_name, phone, appointment_date, appointment_time, status }).eq('id', id);
+            showToast('تم التعديل', 'success');
+            document.getElementById('editModal').classList.add('hidden');
+            fetchAndDisplayAppointments();
+        };
+        document.getElementById('closeModalBtn').onclick = () => document.getElementById('editModal').classList.add('hidden');
 
-        async function deleteAppt(id) {
-            const t = T[lang];
-            if(!confirm(t.mCDel)) return;
-            if (useLocalMode) { allData = allData.filter(x => x.id !== id); localStorage.setItem('clinic_appts', JSON.stringify(allData)); }
-            else { await db.from('appointments').delete().eq('id', id); }
-            alert(t.mDel); await fetchData();
-        }
+        // ========== أحداث عامة ==========
+        document.getElementById('refreshAppointmentsBtn').onclick = fetchAndDisplayAppointments;
+        document.getElementById('deleteAllBtn').onclick = deleteAllAppointments;
+        document.getElementById('bulkWhatsappBtn').onclick = sendBulkWhatsapp;
+        document.getElementById('selectAllCheckbox')?.addEventListener('change', (e) => {
+            document.querySelectorAll('.appointment-checkbox').forEach(cb => { cb.checked = e.target.checked; if(e.target.checked) selectedAppointments.add(cb.getAttribute('data-id')); else selectedAppointments.delete(cb.getAttribute('data-id')); });
+        });
+        document.getElementById('settingsForm').addEventListener('submit', (e) => { e.preventDefault(); saveSettings(); });
+        document.getElementById('addBlockedDateBtn').onclick = () => { const d = document.getElementById('blockedDateInput').value; if(d && !currentSettings.blocked_dates.includes(d)) { currentSettings.blocked_dates.push(d); updateSettingsUI(); } };
+        document.getElementById('resetSettingsBtn').onclick = resetSettingsToDefault;
 
-        function exportCSV() {
-            let csv = '\uFEFF'+(lang==='ar'?'الاسم,الهاتف,التاريخ,الوقت,التسجيل':'Name,Phone,Date,Time,Registered')+'\n';
-            allData.forEach(r => csv += `${r.patient_name},${r.phone},${r.appointment_date},${r.appointment_time},${new Date(r.created_at||Date.now()).toLocaleDateString(lang==='ar'?'ar':'en-US')}\n`);
-            const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'}), link = document.createElement('a');
-            link.href = URL.createObjectURL(blob); link.download = 'appointments.csv'; link.click();
+        // تبديل التبويبات
+        function switchTab(tab) {
+            document.getElementById('appointmentsPanel').classList.toggle('hidden', tab !== 'appointments');
+            document.getElementById('settingsPanel').classList.toggle('hidden', tab !== 'settings');
+            const btn1 = document.getElementById('tabAppointmentsBtn'), btn2 = document.getElementById('tabSettingsBtn');
+            if (tab === 'appointments') { btn1.classList.add('bg-blue-600','text-white'); btn1.classList.remove('bg-gray-200','dark:bg-gray-700'); btn2.classList.remove('bg-blue-600','text-white'); btn2.classList.add('bg-gray-200','dark:bg-gray-700'); fetchAndDisplayAppointments(); }
+            else { btn2.classList.add('bg-blue-600','text-white'); btn2.classList.remove('bg-gray-200','dark:bg-gray-700'); btn1.classList.remove('bg-blue-600','text-white'); btn1.classList.add('bg-gray-200','dark:bg-gray-700'); fetchSettings(); }
         }
+        document.getElementById('tabAppointmentsBtn').onclick = () => switchTab('appointments');
+        document.getElementById('tabSettingsBtn').onclick = () => switchTab('settings');
 
-        async function cleanupOld() {
-            const t = T[lang];
-            if(!confirm(t.mCClean)) return;
-            const limit = new Date(Date.now() - 30*24*60*60*1000).toISOString();
-            if (useLocalMode) { allData = allData.filter(x => new Date(x.created_at) > new Date(limit)); localStorage.setItem('clinic_appts', JSON.stringify(allData)); }
-            else { await db.from('appointments').delete().lt('created_at', limit); }
-            alert(t.mClean); await fetchData();
-        }
+        // الوضع الليلي
+        let isDark = false;
+        document.getElementById('darkModeToggle').onclick = () => {
+            isDark = !isDark;
+            if (isDark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark');
+            document.body.classList.toggle('dark', isDark);
+        };
+        // اللغة
+        document.getElementById('langToggle').onclick = () => { currentLang = currentLang === 'ar' ? 'en' : 'ar'; updateUILanguage(); fetchAndDisplayAppointments(); };
 
-        function applyFilters() {
-            const d = document.getElementById('filter-date').value, r = document.getElementById('filter-reg').value;
-            let res = allData;
-            if(d) res = res.filter(x=>x.appointment_date===d);
-            if(r) res = res.filter(x=>new Date(x.created_at).toISOString().split('T')[0]===r);
-            renderTable(res);
-        }
-        function resetFilters() { document.getElementById('filter-date').value = ''; document.getElementById('filter-reg').value = ''; renderTable(allData); }
+        // إضافة حدث الفورم الجديد
+        document.getElementById('newAppointmentForm')?.addEventListener('submit', handleNewAppointment);
+        function formatDate(dateStr) { return new Date(dateStr).toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US'); }
+        function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
 
-        function loadSettings() {
-            const s = localStorage.getItem('clinic_settings'); if(s) settings = JSON.parse(s);
-            document.querySelectorAll('#set input[type=checkbox]').forEach(cb => cb.checked = settings.allowedDays.includes(parseInt(cb.value)));
-            document.getElementById('s-blocked').value = settings.blockedDates.join('\n');
-            document.getElementById('s-start').value = settings.workStart; document.getElementById('s-end').value = settings.workEnd;
-        }
-        function saveSettings() {
-            const t = T[lang];
-            settings.allowedDays = Array.from(document.querySelectorAll('#set input[type=checkbox]:checked')).map(c=>parseInt(c.value));
-            settings.blockedDates = document.getElementById('s-blocked').value.split('\n').filter(l=>l.trim());
-            settings.workStart = document.getElementById('s-start').value; settings.workEnd = document.getElementById('s-end').value;
-            localStorage.setItem('clinic_settings', JSON.stringify(settings)); alert(t.mSet);
-        }
-        function timeToM(t) { const [h,m] = t.split(':').map(Number); return h*60+m; }
+        // بدء التشغيل
+        (async () => { await fetchSettings(); switchTab('appointments'); })();
     </script>
 </body>
 </html>
