@@ -3,794 +3,480 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>لوحة مواعيد العيادة</title>
+  <title>لوحة إدارة الدوام</title>
   
-  <!-- Supabase JS via CDN -->
+  <!-- Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- خط عربي جميل -->
+  <!-- خط عربي -->
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-  
   <!-- أيقونات -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   
   <style>
-    /* === متغيرات الألوان === */
+    /* === المتغيرات === */
     :root {
-      --bg-primary: #f8fafc;
-      --bg-secondary: #ffffff;
-      --text-primary: #1e293b;
-      --text-secondary: #64748b;
-      --border-color: #e2e8f0;
-      --primary: #3b82f6;
-      --primary-hover: #2563eb;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --whatsapp: #25D366;
-      --shadow: 0 1px 3px rgba(0,0,0,0.1);
-      --radius: 12px;
+      --bg-primary: #f8fafc; --bg-secondary: #ffffff; --bg-card: #ffffff;
+      --text-primary: #1e293b; --text-secondary: #64748b;
+      --border-color: #e2e8f0; --primary: #3b82f6; --primary-hover: #2563eb;
+      --success: #22c55e; --warning: #f59e0b; --danger: #ef4444;
+      --shadow: 0 1px 3px rgba(0,0,0,0.1); --radius: 12px;
+      --day-active: #3b82f6; --day-hover: #93c5fd;
+      --holiday-bg: #fef2f2; --holiday-border: #fecaca;
     }
-
     [data-theme="dark"] {
-      --bg-primary: #0f172a;
-      --bg-secondary: #1e293b;
-      --text-primary: #f1f5f9;
-      --text-secondary: #94a3b8;
-      --border-color: #334155;
-      --primary: #60a5fa;
-      --primary-hover: #3b82f6;
+      --bg-primary: #0f172a; --bg-secondary: #1e293b; --bg-card: #1e293b;
+      --text-primary: #f1f5f9; --text-secondary: #94a3b8;
+      --border-color: #334155; --primary: #60a5fa; --primary-hover: #3b82f6;
       --shadow: 0 1px 3px rgba(0,0,0,0.3);
+      --day-active: #60a5fa; --day-hover: #3b82f6;
+      --holiday-bg: #451a1a; --holiday-border: #7f1d1d;
     }
-
-    /* === الإعدادات العامة === */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Tajawal', -apple-system, sans-serif;
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
-      transition: background 0.3s, color 0.3s;
+      background: var(--bg-primary); color: var(--text-primary);
+      line-height: 1.6; transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
     }
-
-    /* === الهيدر === */
     .header {
-      background: var(--bg-secondary);
-      border-bottom: 1px solid var(--border-color);
-      padding: 1rem 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem; position: sticky; top: 0; z-index: 100;
       box-shadow: var(--shadow);
     }
-
     .header-content {
-      max-width: 1400px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      max-width: 1200px; margin: 0 auto; display: flex;
+      justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
     }
-
-    .header h1 {
-      font-size: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 0.5rem;
-    }
-
+    .header h1 { font-size: 1.4rem; display: flex; align-items: center; gap: 0.5rem; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; }
     .btn-icon {
-      background: var(--bg-primary);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      padding: 0.5rem;
-      cursor: pointer;
-      color: var(--text-primary);
-      display: flex;
-      align-items: center;
-      gap: 0.25rem;
-      transition: all 0.2s;
+      background: var(--bg-primary); border: 1px solid var(--border-color);
+      border-radius: var(--radius); padding: 0.5rem 0.75rem; cursor: pointer;
+      color: var(--text-primary); display: flex; align-items: center; gap: 0.25rem;
+      transition: all 0.2s; font-size: 0.9rem;
     }
-
-    .btn-icon:hover {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
+    .btn-icon:hover { background: var(--primary); color: white; border-color: var(--primary); }
+    .container {
+      max-width: 1200px; margin: 0 auto; padding: 2rem;
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;
     }
-
-    /* === الفلاتر === */
-    .filters {
-      max-width: 1400px;
-      margin: 1.5rem auto;
-      padding: 0 2rem;
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      align-items: center;
+    .card {
+      background: var(--bg-card); border-radius: var(--radius);
+      border: 1px solid var(--border-color); padding: 1.5rem; box-shadow: var(--shadow);
     }
-
-    .filter-group {
-      display: flex;
-      gap: 0.5rem;
-      flex: 1;
-      min-width: 200px;
-    }
-
-    .filters input,
-    .filters select {
-      flex: 1;
-      padding: 0.75rem 1rem;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      font-family: inherit;
-    }
-
-    .filters input:focus,
-    .filters select:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    /* === الأزرار === */
-    .btn-primary {
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: background 0.2s;
-    }
-
-    .btn-primary:hover { background: var(--primary-hover); }
-
-    .btn-secondary {
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-family: inherit;
-    }
-
-    .btn-whatsapp {
-      background: var(--whatsapp);
-      color: white;
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: opacity 0.2s;
-    }
-
-    .btn-whatsapp:hover { opacity: 0.9; }
-
-    /* === الجدول === */
-    .dashboard {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 0 2rem 2rem;
-    }
-
-    .table-container {
-      background: var(--bg-secondary);
-      border-radius: var(--radius);
-      border: 1px solid var(--border-color);
-      overflow: hidden;
-      box-shadow: var(--shadow);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    th, td {
-      padding: 1rem;
-      text-align: start;
+    .card-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.25rem; padding-bottom: 0.75rem;
       border-bottom: 1px solid var(--border-color);
     }
-
-    th {
-      background: var(--bg-primary);
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      font-size: 0.875rem;
-      letter-spacing: 0.05em;
+    .card-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; }
+    .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+    .day-btn {
+      aspect-ratio: 1; border: 2px solid var(--border-color); border-radius: var(--radius);
+      background: var(--bg-primary); color: var(--text-primary); cursor: pointer;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0.25rem; transition: all 0.2s; font-size: 0.85rem; padding: 0.25rem;
     }
-
-    tr:hover { background: rgba(59, 130, 246, 0.05); }
-
-    /* === حالة الموعد === */
-    .status-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.875rem;
-      font-weight: 500;
+    .day-btn:hover { border-color: var(--day-hover); background: var(--day-hover); color: white; }
+    .day-btn.active { background: var(--day-active); border-color: var(--day-active); color: white; font-weight: 600; }
+    .day-name { font-size: 0.7rem; opacity: 0.9; }
+    .day-num { font-size: 1.1rem; font-weight: 600; }
+    .time-inputs { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .time-input { flex: 1; min-width: 120px; }
+    .time-input label { display: block; font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .time-input input {
+      width: 100%; padding: 0.75rem; border: 1px solid var(--border-color);
+      border-radius: var(--radius); background: var(--bg-primary);
+      color: var(--text-primary); font-family: inherit; font-size: 1rem;
     }
-
-    .status-pending { background: rgba(245, 158, 11, 0.15); color: #d97706; }
-    .status-confirmed { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
-    .status-cancelled { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
-
-    /* === الإجراءات === */
-    .actions { display: flex; gap: 0.5rem; }
-
-    .action-btn {
-      background: none;
-      border: none;
-      padding: 0.5rem;
-      cursor: pointer;
-      border-radius: 8px;
-      color: var(--text-secondary);
-      transition: all 0.2s;
+    .time-input input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .calendar-nav { display: flex; gap: 0.5rem; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.25rem; }
+    .calendar-day-header { text-align: center; font-size: 0.8rem; color: var(--text-secondary); padding: 0.5rem; font-weight: 500; }
+    .calendar-day {
+      aspect-ratio: 1; border: 1px solid var(--border-color); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer;
+      transition: all 0.2s; font-size: 0.9rem; position: relative;
     }
-
-    .action-btn:hover {
-      background: var(--bg-primary);
-      color: var(--primary);
+    .calendar-day:hover:not(.other-month):not(.disabled) { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+    .calendar-day.other-month { color: var(--text-secondary); opacity: 0.5; cursor: default; }
+    .calendar-day.disabled { opacity: 0.3; cursor: not-allowed; }
+    .calendar-day.holiday { background: var(--holiday-bg); border-color: var(--holiday-border); color: var(--danger); font-weight: 600; }
+    .calendar-day.holiday::after { content: "🏖️"; position: absolute; bottom: 2px; font-size: 0.7rem; }
+    .calendar-day.today { border: 2px solid var(--warning); font-weight: 600; }
+    .holidays-list {
+      max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color);
+      border-radius: var(--radius); margin-top: 1rem;
     }
-
-    .action-btn.edit:hover { color: var(--warning); }
-    .action-btn.whatsapp:hover { color: var(--whatsapp); }
-
-    /* === النافذة المنبثقة === */
-    dialog {
-      border: none;
-      border-radius: var(--radius);
-      padding: 2rem;
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-      max-width: 500px;
-      width: 90%;
+    .holiday-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.95rem;
     }
-
-    dialog::backdrop {
-      background: rgba(0,0,0,0.5);
+    .holiday-item:last-child { border-bottom: none; }
+    .holiday-item .remove-btn {
+      background: none; border: none; color: var(--danger); cursor: pointer;
+      padding: 0.25rem; border-radius: 4px; transition: background 0.2s;
     }
-
-    #editForm {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
+    .holiday-item .remove-btn:hover { background: rgba(239, 68, 68, 0.1); }
+    .btn-primary {
+      background: var(--primary); color: white; border: none; padding: 0.75rem 1.5rem;
+      border-radius: var(--radius); cursor: pointer; font-family: inherit; font-weight: 500;
+      display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;
+      width: 100%; justify-content: center;
     }
-
-    #editForm label {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      font-weight: 500;
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent; color: var(--text-primary); border: 1px solid var(--border-color);
+      padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer;
+      font-family: inherit; transition: all 0.2s;
     }
-
-    #editForm input,
-    #editForm select {
-      padding: 0.75rem;
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius);
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      font-family: inherit;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 1rem;
-      flex-wrap: wrap;
-    }
-
-    /* === التنبيهات === */
+    .btn-outline:hover { background: var(--bg-primary); border-color: var(--primary); }
     .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--bg-secondary);
-      color: var(--text-primary);
-      padding: 1rem 2rem;
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      border-left: 4px solid var(--primary);
-      z-index: 1000;
-      animation: slideUp 0.3s ease;
+      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+      background: var(--bg-card); color: var(--text-primary); padding: 1rem 2rem;
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      border-left: 4px solid var(--primary); z-index: 1000;
+      animation: slideUp 0.3s ease; display: flex; align-items: center; gap: 0.5rem;
     }
-
     .toast.success { border-left-color: var(--success); }
     .toast.error { border-left-color: var(--danger); }
+    .toast.warning { border-left-color: var(--warning); }
     .toast.hidden { display: none; }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translate(-50%, 20px); }
-      to { opacity: 1; transform: translate(-50%, 0); }
-    }
-
-    /* === التجاوب === */
+    @keyframes slideUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+    .loading { display: flex; align-items: center; justify-content: center; gap: 0.5rem; color: var(--text-secondary); padding: 1rem; }
+    .spinner { width: 1rem; height: 1rem; border: 2px solid var(--border-color); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     @media (max-width: 768px) {
-      .header-content { flex-direction: column; gap: 1rem; text-align: center; }
-      .filters { flex-direction: column; }
-      .table-container { overflow-x: auto; }
-      table { min-width: 600px; }
+      .container { grid-template-columns: 1fr; padding: 1rem; }
+      .header-content { flex-direction: column; text-align: center; }
+      .days-grid { grid-template-columns: repeat(7, 1fr); }
+      .time-inputs { flex-direction: column; align-items: stretch; }
     }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
   </style>
 </head>
 <body>
-  <!-- شريط العلوي -->
   <header class="header">
     <div class="header-content">
-      <h1><i class="bi bi-calendar-check"></i> <span data-i18n="pageTitle">لوحة مواعيد العيادة</span></h1>
-      
+      <h1><i class="bi bi-calendar-week"></i> <span data-i18n="title">لوحة إدارة الدوام</span></h1>
       <div class="header-actions">
-        <!-- تبديل اللغة -->
-        <button id="langToggle" class="btn-icon" aria-label="Toggle language">
-          <i class="bi bi-globe"></i> <span id="langLabel">EN</span>
-        </button>
-        
-        <!-- تبديل الوضع الليلي -->
-        <button id="themeToggle" class="btn-icon" aria-label="Toggle theme">
-          <i class="bi bi-moon-stars-fill"></i>
-        </button>
+        <button id="langToggle" class="btn-icon"><i class="bi bi-globe"></i> <span id="langLabel">EN</span></button>
+        <button id="themeToggle" class="btn-icon"><i class="bi bi-moon-stars-fill"></i></button>
       </div>
     </div>
   </header>
 
-  <!-- أدوات البحث والفلترة -->
-  <section class="filters">
-    <div class="filter-group">
-      <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم أو الهاتف..." data-i18n-placeholder="searchPlaceholder">
-    </div>
-    
-    <div class="filter-group">
-      <input type="date" id="dateFilter">
-      <select id="statusFilter">
-        <option value="" data-i18n="allStatus">جميع الحالات</option>
-        <option value="pending" data-i18n="statusPending">قيد الانتظار</option>
-        <option value="confirmed" data-i18n="statusConfirmed">مؤكد</option>
-        <option value="cancelled" data-i18n="statusCancelled">ملغي</option>
-      </select>
-    </div>
-    
-    <button id="refreshBtn" class="btn-primary">
-      <i class="bi bi-arrow-clockwise"></i> <span data-i18n="refresh">تحديث</span>
-    </button>
-  </section>
+  <main class="container">
+    <!-- أيام الدوام -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title"><i class="bi bi-calendar-check"></i> <span data-i18n="workDays">أيام الدوام</span></h2>
+        <span class="badge" id="daysCount">5/7</span>
+      </div>
+      <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1rem;" data-i18n="workDaysHint">اختر أيام الأسبوع التي تعمل فيها العيادة</p>
+      <div class="days-grid" id="daysGrid"></div>
+      <button id="saveDaysBtn" class="btn-primary"><i class="bi bi-save"></i> <span data-i18n="save">حفظ في القاعدة</span></button>
+    </section>
 
-  <!-- جدول البيانات -->
-  <main class="dashboard">
-    <div class="table-container">
-      <table id="appointmentsTable">
-        <thead>
-          <tr>
-            <th data-i18n="patientName">اسم المريض</th>
-            <th data-i18n="phone">الهاتف</th>
-            <th data-i18n="appointmentDate">التاريخ</th>
-            <th data-i18n="appointmentTime">الوقت</th>
-            <th data-i18n="status">الحالة</th>
-            <th data-i18n="actions">الإجراءات</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- سيتم ملء البيانات هنا ديناميكياً -->
-        </tbody>
-      </table>
-    </div>
+    <!-- ساعات العمل -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title"><i class="bi bi-clock"></i> <span data-i18n="workHours">ساعات العمل</span></h2>
+      </div>
+      <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1rem;" data-i18n="workHoursHint">حدد وقت بدء وانتهاء الدوام اليومي</p>
+      <div class="time-inputs">
+        <div class="time-input">
+          <label data-i18n="startTime">وقت البدء</label>
+          <input type="time" id="workStart" value="09:00">
+        </div>
+        <div class="time-input">
+          <label data-i18n="endTime">وقت الانتهاء</label>
+          <input type="time" id="workEnd" value="17:00">
+        </div>
+      </div>
+      <button id="saveHoursBtn" class="btn-primary" style="margin-top:1.5rem;"><i class="bi bi-save"></i> <span data-i18n="save">حفظ في القاعدة</span></button>
+    </section>
+
+    <!-- العطل -->
+    <section class="card" style="grid-column: 1 / -1;">
+      <div class="card-header">
+        <h2 class="card-title"><i class="bi bi-calendar-x"></i> <span data-i18n="holidays">تواريخ العطل</span></h2>
+        <button id="clearHolidaysBtn" class="btn-outline" style="padding:0.4rem 0.8rem;font-size:0.85rem;">
+          <i class="bi bi-trash"></i> <span data-i18n="clearAll">مسح الكل</span>
+        </button>
+      </div>
+      <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1rem;" data-i18n="holidaysHint">انقر على أي تاريخ في التقويم لإضافته أو إزالته من العطل</p>
+      <div class="calendar-header">
+        <div class="calendar-nav">
+          <button class="btn-outline" id="prevMonth"><i class="bi bi-chevron-left"></i></button>
+          <button class="btn-outline" id="todayBtn"><i class="bi bi-calendar-today"></i></button>
+          <button class="btn-outline" id="nextMonth"><i class="bi bi-chevron-right"></i></button>
+        </div>
+        <h3 id="currentMonth" style="font-size:1.1rem;font-weight:600;"></h3>
+        <div style="width:100px;"></div>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+      <div style="margin-top:1.5rem;">
+        <h4 style="margin-bottom:0.75rem;font-size:0.95rem;" data-i18n="selectedHolidays">العطل المحددة (<span id="holidaysCount">0</span>)</h4>
+        <div class="holidays-list" id="holidaysList">
+          <div style="padding:1rem;text-align:center;color:var(--text-secondary);" data-i18n="noHolidays">لا توجد عطل محددة</div>
+        </div>
+      </div>
+      <button id="saveHolidaysBtn" class="btn-primary" style="margin-top:1rem;"><i class="bi bi-save"></i> <span data-i18n="save">حفظ في القاعدة</span></button>
+    </section>
   </main>
 
-  <!-- نافذة تعديل الموعد -->
-  <dialog id="editModal">
-    <form id="editForm">
-      <h3 data-i18n="editAppointment">تعديل الموعد</h3>
-      <input type="hidden" id="editId">
-      
-      <label>
-        <span data-i18n="patientName">اسم المريض</span>
-        <input type="text" id="editName" required>
-      </label>
-      
-      <label>
-        <span data-i18n="phone">الهاتف</span>
-        <input type="tel" id="editPhone" required pattern="^[+]?[0-9\s\-()]{10,}$">
-      </label>
-      
-      <label>
-        <span data-i18n="appointmentDate">التاريخ</span>
-        <input type="date" id="editDate" required>
-      </label>
-      
-      <label>
-        <span data-i18n="appointmentTime">الوقت</span>
-        <input type="time" id="editTime" required>
-      </label>
-      
-      <label>
-        <span data-i18n="status">الحالة</span>
-        <select id="editStatus">
-          <option value="pending" data-i18n="statusPending">قيد الانتظار</option>
-          <option value="confirmed" data-i18n="statusConfirmed">مؤكد</option>
-          <option value="cancelled" data-i18n="statusCancelled">ملغي</option>
-        </select>
-      </label>
-      
-      <div class="modal-actions">
-        <button type="button" id="whatsappBtn" class="btn-whatsapp">
-          <i class="bi bi-whatsapp"></i> <span data-i18n="sendWhatsApp">إرسال واتساب</span>
-        </button>
-        <button type="submit" class="btn-primary" data-i18n="save">حفظ</button>
-        <button type="button" id="closeModal" class="btn-secondary" data-i18n="cancel">إلغاء</button>
-      </div>
-    </form>
-  </dialog>
-
-  <!-- التنبيهات -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- === JavaScript === -->
   <script>
     // ============================================
-    // 🌐 i18n - دعم اللغتين
+    // 🌐 الترجمة - لا تخزن في القاعدة
     // ============================================
     const translations = {
       ar: {
-        pageTitle: "لوحة مواعيد العيادة",
-        searchPlaceholder: "🔍 بحث بالاسم أو الهاتف...",
-        allStatus: "جميع الحالات",
-        statusPending: "قيد الانتظار",
-        statusConfirmed: "مؤكد",
-        statusCancelled: "ملغي",
-        refresh: "تحديث",
-        patientName: "اسم المريض",
-        phone: "الهاتف",
-        appointmentDate: "التاريخ",
-        appointmentTime: "الوقت",
-        status: "الحالة",
-        actions: "الإجراءات",
-        edit: "تعديل",
-        delete: "حذف",
-        whatsapp: "واتساب",
-        editAppointment: "تعديل الموعد",
-        sendWhatsApp: "إرسال واتساب",
-        save: "حفظ",
-        cancel: "إلغاء",
-        noData: "لا توجد مواعيد لعرضها",
-        loading: "جاري التحميل...",
-        updated: "تم تحديث الموعد بنجاح ✓",
-        error: "حدث خطأ، حاول مرة أخرى",
-        whatsappMsg: `مرحباً، هذا تذكير بموعدك في العيادة:\n📅 التاريخ: {date}\n🕐 الوقت: {time}\n👤 الاسم: {name}\nيرجى الحضور في الوقت المحدد.`,
+        title: "لوحة إدارة الدوام", workDays: "أيام الدوام", workDaysHint: "اختر أيام الأسبوع التي تعمل فيها العيادة",
+        workHours: "ساعات العمل", workHoursHint: "حدد وقت بدء وانتهاء الدوام اليومي",
+        holidays: "تواريخ العطل", holidaysHint: "انقر على أي تاريخ في التقويم لإضافته أو إزالته من العطل",
+        startTime: "وقت البدء", endTime: "وقت الانتهاء", save: "حفظ في القاعدة", clearAll: "مسح الكل",
+        selectedHolidays: "العطل المحددة", noHolidays: "لا توجد عطل محددة", loading: "جاري التحميل من القاعدة...",
+        saved: "✅ تم الحفظ في قاعدة البيانات", error: "❌ خطأ في الاتصال بالقاعدة", confirmClear: "مسح جميع العطل من القاعدة؟",
+        days: ["أحد","اثنين","ثلاثاء","أربعاء","خميس","جمعة","سبت"],
+        months: ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"],
       },
       en: {
-        pageTitle: "Clinic Appointments Dashboard",
-        searchPlaceholder: "🔍 Search by name or phone...",
-        allStatus: "All statuses",
-        statusPending: "Pending",
-        statusConfirmed: "Confirmed",
-        statusCancelled: "Cancelled",
-        refresh: "Refresh",
-        patientName: "Patient Name",
-        phone: "Phone",
-        appointmentDate: "Date",
-        appointmentTime: "Time",
-        status: "Status",
-        actions: "Actions",
-        edit: "Edit",
-        delete: "Delete",
-        whatsapp: "WhatsApp",
-        editAppointment: "Edit Appointment",
-        sendWhatsApp: "Send WhatsApp",
-        save: "Save",
-        cancel: "Cancel",
-        noData: "No appointments to display",
-        loading: "Loading...",
-        updated: "Appointment updated successfully ✓",
-        error: "An error occurred, please try again",
-        whatsappMsg: `Hello, this is a reminder for your clinic appointment:\n📅 Date: {date}\n🕐 Time: {time}\n👤 Name: {name}\nPlease arrive on time.`,
+        title: "Work Schedule Manager", workDays: "Work Days", workDaysHint: "Select operating days",
+        workHours: "Work Hours", workHoursHint: "Set daily start and end times",
+        holidays: "Holiday Dates", holidaysHint: "Click dates to add/remove holidays",
+        startTime: "Start Time", endTime: "End Time", save: "Save to Database", clearAll: "Clear All",
+        selectedHolidays: "Selected Holidays", noHolidays: "No holidays set", loading: "Loading from database...",
+        saved: "✅ Saved to database", error: "❌ Database error", confirmClear: "Clear all holidays from database?",
+        days: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+        months: ["January","February","March","April","May","June","July","August","September","October","November","December"],
       }
     };
-
     let currentLang = localStorage.getItem('lang') || 'ar';
-
-    function t(key) {
-      return translations[currentLang]?.[key] || key;
-    }
-
+    function t(key) { return translations[currentLang]?.[key] || key; }
     function setLang(lang) {
-      currentLang = lang;
-      localStorage.setItem('lang', lang);
+      currentLang = lang; localStorage.setItem('lang', lang);
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
-      
       document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.dataset.i18n;
-        if (translations[currentLang]?.[key]) {
-          el.textContent = translations[currentLang][key];
-        }
+        const k = el.dataset.i18n; if(translations[currentLang]?.[k]) el.textContent = translations[currentLang][k];
       });
-      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.dataset.i18nPlaceholder;
-        if (translations[currentLang]?.[key]) {
-          el.placeholder = translations[currentLang][key];
-        }
-      });
+      renderDaysGrid(); renderCalendar(); renderHolidaysList();
     }
-
     function getLang() { return currentLang; }
 
     // ============================================
-    // 🌓 Theme Toggle - الوضع الليلي/النهاري
+    // 🌓 الوضع الليلي - تفضيل محلي فقط
     // ============================================
     function initTheme() {
-      const html = document.documentElement;
-      const toggleBtn = document.getElementById('themeToggle');
-      
-      function calculateTheme() {
-        const stored = localStorage.getItem('theme');
-        if (stored) return stored;
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        return isDark ? 'dark' : 'light';
-      }
-      
-      function applyTheme(theme) {
-        html.setAttribute('data-theme', theme);
-        const icon = toggleBtn.querySelector('i');
-        icon.className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
-        toggleBtn.setAttribute('aria-label', 
-          theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-      }
-      
-      const currentTheme = calculateTheme();
-      applyTheme(currentTheme);
-      
-      toggleBtn.addEventListener('click', () => {
-        const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        applyTheme(newTheme);
-        localStorage.setItem('theme', newTheme);
-      });
-      
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
-        if (!localStorage.getItem('theme')) {
-          applyTheme(e.matches ? 'dark' : 'light');
-        }
+      const html = document.documentElement, btn = document.getElementById('themeToggle');
+      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      html.setAttribute('data-theme', theme);
+      btn.querySelector('i').className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+      btn.addEventListener('click', () => {
+        const nt = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', nt); localStorage.setItem('theme', nt);
+        btn.querySelector('i').className = nt === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
       });
     }
 
     // ============================================
-    // 🏥 Main App Logic
+    // 🗄️ Supabase - المصدر الوحيد لبيانات العيادة
     // ============================================
-    
-    // ⚠️ Supabase Config - استبدل بمفاتيحك الخاصة
     const SUPABASE_URL = 'https://ncqvzpcqotdiwjqbwlwp.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_98lfpU1zaqG-MNxkhlvg6g_KEMPMPbS';
-    
     const { createClient } = supabase;
     const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    let appointments = [];
-    let currentEditId = null;
 
-    // === التهيئة ===
+    // حالة التطبيق - تُملأ من القاعدة فقط
+    let clinicSettings = { allowed_days: [], blocked_dates: [], work_start: '', work_end: '' };
+    let isLoading = false, currentCalendarDate = new Date();
+
+    // ============================================
+    // 🔄 التهيئة - تحميل من Supabase فقط
+    // ============================================
     document.addEventListener('DOMContentLoaded', async () => {
-      initTheme();
-      setLang(currentLang);
+      initTheme(); setLang(currentLang);
+      document.getElementById('langLabel').textContent = currentLang.toUpperCase();
       
-      // تبديل اللغة
+      // أحداث الأزرار
       document.getElementById('langToggle').addEventListener('click', () => {
-        const newLang = getLang() === 'ar' ? 'en' : 'ar';
-        setLang(newLang);
-        document.getElementById('langLabel').textContent = newLang.toUpperCase();
-        renderTable();
+        const nl = getLang() === 'ar' ? 'en' : 'ar'; setLang(nl);
+        document.getElementById('langLabel').textContent = nl.toUpperCase();
       });
+      document.getElementById('saveDaysBtn').addEventListener('click', () => saveToDatabase('days'));
+      document.getElementById('saveHoursBtn').addEventListener('click', () => saveToDatabase('hours'));
+      document.getElementById('saveHolidaysBtn').addEventListener('click', () => saveToDatabase('holidays'));
+      document.getElementById('clearHolidaysBtn').addEventListener('click', clearHolidays);
+      document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
+      document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
+      document.getElementById('todayBtn').addEventListener('click', () => { currentCalendarDate = new Date(); renderCalendar(); });
       
-      // أزرار التحكم
-      document.getElementById('refreshBtn').addEventListener('click', fetchAppointments);
-      document.getElementById('searchInput').addEventListener('input', renderTable);
-      document.getElementById('dateFilter').addEventListener('change', renderTable);
-      document.getElementById('statusFilter').addEventListener('change', renderTable);
-      
-      // نافذة التعديل
-      document.getElementById('closeModal').addEventListener('click', () => {
-        document.getElementById('editModal').close();
-      });
-      
-      document.getElementById('editForm').addEventListener('submit', handleSave);
-      document.getElementById('whatsappBtn').addEventListener('click', sendWhatsApp);
-      
-      await fetchAppointments();
+      // ⭐ تحميل الإعدادات من السجل #1 في Supabase فقط
+      await loadFromDatabase();
+      renderDaysGrid(); renderCalendar(); renderHolidaysList();
     });
 
-    // === جلب المواعيد ===
-    async function fetchAppointments() {
-      showToast(t('loading'), 'info');
+    // ============================================
+    // 📥 التحميل من السجل رقم 1 فقط
+    // ============================================
+    async function loadFromDatabase() {
+      if(isLoading) return; isLoading = true; showToast(t('loading'), 'info');
+      try {
+        // جلب السجل رقم 1 حصراً
+        const { data, error } = await db.from('clinic_settings').select('*').eq('id', 1).single();
+        if(error && error.code !== 'PGRST116') throw error; // PGRST116 = لا توجد نتائج
+        
+        if(data) {
+          clinicSettings = {
+            allowed_days: data.allowed_days || [0,1,2,3,4],
+            blocked_dates: data.blocked_dates || [],
+            work_start: data.work_start || '09:00:00',
+            work_end: data.work_end || '17:00:00'
+          };
+          // تحديث الواجهة بالقيم من القاعدة
+          document.getElementById('workStart').value = clinicSettings.work_start.slice(0,5);
+          document.getElementById('workEnd').value = clinicSettings.work_end.slice(0,5);
+        } else {
+          // إذا لم يوجد سجل، نستخدم القيم الافتراضية للعرض فقط
+          clinicSettings = { allowed_days: [0,1,2,3,4], blocked_dates: [], work_start: '09:00:00', work_end: '17:00:00' };
+        }
+        updateDaysCount(); updateHolidaysCount();
+      } catch(err) {
+        console.error('Database load error:', err); showToast(t('error'), 'error');
+      } finally { isLoading = false; }
+    }
+
+    // ============================================
+    // 📤 الحفظ إلى السجل رقم 1 فقط
+    // ============================================
+    async function saveToDatabase(section) {
+      if(isLoading) return; isLoading = true;
+      try {
+        const updates = {};
+        if(section === 'days' || section === 'all') updates.allowed_days = clinicSettings.allowed_days;
+        if(section === 'hours' || section === 'all') {
+          updates.work_start = document.getElementById('workStart').value + ':00';
+          updates.work_end = document.getElementById('workEnd').value + ':00';
+          clinicSettings.work_start = updates.work_start;
+          clinicSettings.work_end = updates.work_end;
+        }
+        if(section === 'holidays' || section === 'all') updates.blocked_dates = clinicSettings.blocked_dates;
+        
+        // محاولة التحديث للسجل رقم 1
+        let { error } = await db.from('clinic_settings').update(updates).eq('id', 1);
+        
+        // إذا فشل التحديث لأن السجل غير موجود، ننشئه
+        if(error && (error.code === '42P01' || error.message?.includes('not found'))) {
+          const { error: insErr } = await db.from('clinic_settings').insert([{ id: 1, ...updates }]);
+          if(insErr) throw insErr;
+        } else if(error) throw error;
+        
+        showToast(t('saved'), 'success');
+        // إعادة التحميل للتأكد من المزامنة
+        if(section !== 'all') await loadFromDatabase();
+      } catch(err) {
+        console.error('Database save error:', err); showToast(t('error'), 'error');
+      } finally { isLoading = false; }
+    }
+
+    // ============================================
+    // 📅 عرض أيام الأسبوع
+    // ============================================
+    function renderDaysGrid() {
+      const grid = document.getElementById('daysGrid'), days = t('days');
+      grid.innerHTML = days.map((name, idx) => {
+        const active = clinicSettings.allowed_days.includes(idx);
+        return `<button class="day-btn ${active?'active':''}" onclick="toggleDay(${idx})" title="${name}">
+          <span class="day-num">${idx}</span><span class="day-name">${name}</span></button>`;
+      }).join('');
+      updateDaysCount();
+    }
+    function toggleDay(idx) {
+      const i = clinicSettings.allowed_days.indexOf(idx);
+      if(i > -1) clinicSettings.allowed_days.splice(i,1);
+      else { clinicSettings.allowed_days.push(idx); clinicSettings.allowed_days.sort((a,b)=>a-b); }
+      renderDaysGrid();
+    }
+    function updateDaysCount() { document.getElementById('daysCount').textContent = `${clinicSettings.allowed_days.length}/7`; }
+
+    // ============================================
+    // 🗓️ التقويم والعطل
+    // ============================================
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      const y = currentCalendarDate.getFullYear(), m = currentCalendarDate.getMonth();
+      document.getElementById('currentMonth').textContent = `${t('months')[m]} ${y}`;
+      const dayHeaders = t('days').map(d => `<div class="calendar-day-header">${d}</div>`).join('');
+      const firstDay = new Date(y, m, 1), startIdx = firstDay.getDay();
+      const daysInMonth = new Date(y, m+1, 0).getDate(), prevDays = new Date(y, m, 0).getDate();
+      const todayStr = new Date().toISOString().split('T')[0];
       
-      const { data, error } = await db
-        .from('appointments')
-        .select('*')
-        .order('appointment_date', { ascending: false })
-        .order('appointment_time', { ascending: true });
-      
-      if (error) {
-        console.error('Supabase error:', error);
-        showToast(t('error'), 'error');
-        return;
+      let html = dayHeaders;
+      for(let i=startIdx-1; i>=0; i--) html += `<div class="calendar-day other-month">${prevDays-i}</div>`;
+      for(let d=1; d<=daysInMonth; d++) {
+        const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const isToday = ds===todayStr, isHol = clinicSettings.blocked_dates.includes(ds);
+        const dow = new Date(y,m,d).getDay(), disabled = !clinicSettings.allowed_days.includes(dow) && !isHol;
+        let cls = 'calendar-day';
+        if(isToday) cls+=' today'; if(isHol) cls+=' holiday'; if(disabled) cls+=' disabled';
+        html += `<div class="${cls}" onclick="toggleHoliday('${ds}')">${d}</div>`;
       }
-      
-      appointments = data || [];
-      renderTable();
+      for(let d=1, total=49, filled=startIdx+daysInMonth; total-filled>=d; d++) 
+        html += `<div class="calendar-day other-month">${d}</div>`;
+      grid.innerHTML = html;
     }
+    function changeMonth(delta) { currentCalendarDate.setMonth(currentCalendarDate.getMonth()+delta); renderCalendar(); }
+    function toggleHoliday(ds) {
+      const i = clinicSettings.blocked_dates.indexOf(ds);
+      if(i>-1) clinicSettings.blocked_dates.splice(i,1);
+      else { clinicSettings.blocked_dates.push(ds); clinicSettings.blocked_dates.sort(); }
+      renderCalendar(); renderHolidaysList(); updateHolidaysCount();
+    }
+    function updateHolidaysCount() { document.getElementById('holidaysCount').textContent = clinicSettings.blocked_dates.length; }
 
-    // === عرض الجدول ===
-    function renderTable() {
-      const tbody = document.getElementById('tableBody');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const dateFilter = document.getElementById('dateFilter').value;
-      const statusFilter = document.getElementById('statusFilter').value;
-      
-      let filtered = appointments.filter(appt => {
-        const matchesSearch = 
-          appt.patient_name.toLowerCase().includes(search) ||
-          appt.phone.toLowerCase().includes(search);
-        const matchesDate = !dateFilter || appt.appointment_date === dateFilter;
-        const matchesStatus = !statusFilter || appt.status === statusFilter;
-        return matchesSearch && matchesDate && matchesStatus;
-      });
-      
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;">${t('noData')}</td></tr>`;
-        return;
+    function renderHolidaysList() {
+      const list = document.getElementById('holidaysList'), lang = getLang();
+      if(clinicSettings.blocked_dates.length === 0) {
+        list.innerHTML = `<div style="padding:1rem;text-align:center;color:var(--text-secondary);">${t('noHolidays')}</div>`; return;
       }
-      
-      tbody.innerHTML = filtered.map(appt => `
-        <tr>
-          <td><strong>${escapeHtml(appt.patient_name)}</strong></td>
-          <td>${formatPhone(appt.phone)}</td>
-          <td>${formatDate(appt.appointment_date)}</td>
-          <td>${formatTime(appt.appointment_time)}</td>
-          <td><span class="status-badge status-${appt.status}">${t('status' + capitalize(appt.status))}</span></td>
-          <td class="actions">
-            <button class="action-btn edit" onclick="openEditModal('${appt.id}')" title="${t('edit')}">
-              <i class="bi bi-pencil"></i>
-            </button>
-            <button class="action-btn whatsapp" onclick="quickWhatsApp('${appt.id}')" title="${t('whatsapp')}">
-              <i class="bi bi-whatsapp"></i>
-            </button>
-          </td>
-        </tr>
-      `).join('');
+      list.innerHTML = clinicSettings.blocked_dates.map(dt => {
+        const d = new Date(dt+'T00:00:00'), dn = t('days')[d.getDay()], mo = t('months')[d.getMonth()];
+        const fmt = lang==='ar' ? `${d.getDate()} ${mo} ${d.getFullYear()} (${dn})` : `${mo} ${d.getDate()}, ${d.getFullYear()} (${dn})`;
+        return `<div class="holiday-item"><span>${fmt}</span>
+          <button class="remove-btn" onclick="removeHoliday('${dt}')" title="${t('clearAll')}"><i class="bi bi-x-lg"></i></button></div>`;
+      }).join('');
     }
-
-    // === فتح نافذة التعديل ===
-    window.openEditModal = function(id) {
-      const appt = appointments.find(a => a.id === id);
-      if (!appt) return;
-      
-      currentEditId = id;
-      document.getElementById('editId').value = id;
-      document.getElementById('editName').value = appt.patient_name;
-      document.getElementById('editPhone').value = appt.phone;
-      document.getElementById('editDate').value = appt.appointment_date;
-      document.getElementById('editTime').value = appt.appointment_time;
-      document.getElementById('editStatus').value = appt.status;
-      
-      document.getElementById('editModal').showModal();
-    };
-
-    // === حفظ التعديلات ===
-    async function handleSave(e) {
-      e.preventDefault();
-      
-      const updates = {
-        patient_name: document.getElementById('editName').value,
-        phone: document.getElementById('editPhone').value,
-        appointment_date: document.getElementById('editDate').value,
-        appointment_time: document.getElementById('editTime').value,
-        status: document.getElementById('editStatus').value,
-      };
-      
-      const { error } = await db
-        .from('appointments')
-        .update(updates)
-        .eq('id', currentEditId);
-      
-      if (error) {
-        console.error('Update error:', error);
-        showToast(t('error'), 'error');
-        return;
+    function removeHoliday(ds) {
+      const i = clinicSettings.blocked_dates.indexOf(ds);
+      if(i>-1) { clinicSettings.blocked_dates.splice(i,1); renderCalendar(); renderHolidaysList(); updateHolidaysCount(); }
+    }
+    function clearHolidays() {
+      if(confirm(t('confirmClear'))) {
+        clinicSettings.blocked_dates = []; renderCalendar(); renderHolidaysList(); updateHolidaysCount();
+        saveToDatabase('holidays');
       }
-      
-      document.getElementById('editModal').close();
-      showToast(t('updated'), 'success');
-      await fetchAppointments();
     }
 
-    // === إرسال واتساب ===
-    function sendWhatsApp() {
-      const name = document.getElementById('editName').value;
-      const phone = document.getElementById('editPhone').value;
-      const date = document.getElementById('editDate').value;
-      const time = document.getElementById('editTime').value;
-      
-      let msg = t('whatsappMsg')
-        .replace('{name}', name)
-        .replace('{date}', formatDate(date))
-        .replace('{time}', formatTime(time));
-      
-      const cleanPhone = phone.replace(/[^+\d]/g, '');
-      const intlPhone = cleanPhone.startsWith('+') ? cleanPhone.slice(1) : cleanPhone;
-      
-      const url = `https://wa.me/${intlPhone}?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank', 'width=800,height=600');
+    // ============================================
+    // 🔔 التنبيهات
+    // ============================================
+    function showToast(msg, type='info') {
+      const t = document.getElementById('toast'); t.textContent = msg; t.className = `toast ${type}`;
+      t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'), 3000);
     }
 
-    // === إرسال سريع من الجدول ===
-    window.quickWhatsApp = function(id) {
-      const appt = appointments.find(a => a.id === id);
-      if (!appt) return;
-      
-      let msg = t('whatsappMsg')
-        .replace('{name}', appt.patient_name)
-        .replace('{date}', formatDate(appt.appointment_date))
-        .replace('{time}', formatTime(appt.appointment_time));
-      
-      const cleanPhone = appt.phone.replace(/[^+\d]/g, '');
-      const intlPhone = cleanPhone.startsWith('+') ? cleanPhone.slice(1) : cleanPhone;
-      
-      const url = `https://wa.me/${intlPhone}?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank', 'width=800,height=600');
-    };
-
-    // === أدوات مساعدة ===
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      const [y, m, d] = dateStr.split('-');
-      return getLang() === 'ar' ? `${d}/${m}/${y}` : `${y}-${m}-${d}`;
-    }
-
-    function formatTime(timeStr) {
-      if (!timeStr) return '';
-      const [h, min] = timeStr.split(':');
-      return `${h}:${min}`;
-    }
-
-    function formatPhone(phone) {
-      return phone.replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3');
-    }
-
-    function capitalize(str) {
-      return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function showToast(message, type = 'info') {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.className = `toast ${type}`;
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3000);
-    }
+    // ============================================
+    // 🌍 دوال عامة
+    // ============================================
+    window.toggleDay = toggleDay; window.toggleHoliday = toggleHoliday; window.removeHoliday = removeHoliday;
   </script>
 </body>
 </html>
