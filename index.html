@@ -3,562 +3,609 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🏥 لوحة تحكم العيادة</title>
+  <title>لوحة تحكم العيادة | Clinic Dashboard</title>
+  <!-- Tailwind CSS + Font Awesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root {
-      --primary: #4f46e5; --primary-hover: #4338ca;
-      --secondary: #64748b; --success: #22c55e;
-      --warning: #f59e0b; --danger: #ef4444;
-      --bg-light: #f8fafc; --card-bg: #ffffff;
-      --text-dark: #1e293b; --text-light: #64748b;
-      --border: #e2e8f0; --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      --radius: 12px;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { direction: rtl; background: var(--bg-light); color: var(--text-dark); line-height: 1.6; }
-    
-    .navbar { background: linear-gradient(135deg, var(--primary), #7c3aed); padding: 1rem 2rem; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
-    .nav-container { max-width: 1200px; margin: auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-    .logo { color: white; font-size: 1.5rem; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; }
-    .nav-links { display: flex; gap: 0.5rem; list-style: none; flex-wrap: wrap; }
-    .nav-links button { background: none; border: none; color: rgba(255,255,255,0.9); padding: 0.5rem 1rem; border-radius: var(--radius); cursor: pointer; transition: all 0.3s; font-size: 1rem; }
-    .nav-links button:hover, .nav-links button.active { background: rgba(255,255,255,0.2); color: white; }
-    
-    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
-    .page { display: none; animation: fadeIn 0.3s ease-out; }
-    .page.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 1.5rem; }
-    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 0.5rem; }
-    .card-title { font-size: 1.25rem; font-weight: 600; color: var(--text-dark); }
-    
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
-    .form-group { margin-bottom: 1rem; }
-    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-dark); }
-    .form-control { width: 100%; padding: 0.75rem; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; transition: border-color 0.3s; background: white; }
-    .form-control:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-    
-    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 500; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 0.5rem; font-size: 1rem; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
-    .btn-secondary { background: var(--secondary); color: white; }
-    .btn-success { background: var(--success); color: white; }
-    .btn-warning { background: var(--warning); color: white; }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-    
-    .filters { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem; background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); align-items: flex-end; }
-    
-    .table-container { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; min-width: 600px; }
-    th, td { padding: 1rem; text-align: right; border-bottom: 1px solid var(--border); }
-    th { background: var(--bg-light); font-weight: 600; color: var(--text-light); white-space: nowrap; }
-    tr:hover { background: var(--bg-light); }
-    .status-badge { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.875rem; font-weight: 500; }
-    .status-pending { background: #fef3c7; color: #92400e; }
-    .status-confirmed { background: #dcfce7; color: #166534; }
-    .status-cancelled { background: #fee2e2; color: #991b1b; }
-    
-    .days-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.75rem; }
-    .day-checkbox { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: var(--bg-light); border-radius: 8px; cursor: pointer; transition: all 0.3s; user-select: none; }
-    .day-checkbox input { cursor: pointer; transform: scale(1.2); }
-    .day-checkbox:hover { background: var(--border); }
-    .day-checkbox.checked { background: var(--primary); color: white; }
-    
-    .blocked-dates-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-    .blocked-tag { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; background: var(--danger); color: white; border-radius: 20px; font-size: 0.875rem; }
-    .blocked-tag button { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; line-height: 1; padding: 0; }
-    
-    .alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.75rem; animation: slideIn 0.3s ease; }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-    .alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-    .alert-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-    
-    .loading { text-align: center; padding: 2rem; color: var(--text-light); }
-    .empty-state { text-align: center; padding: 3rem; color: var(--text-light); }
-    
-    @media (max-width: 768px) {
-      .nav-container { flex-direction: column; align-items: stretch; }
-      .nav-links { justify-content: center; }
-      .filters { flex-direction: column; align-items: stretch; }
-      .form-grid { grid-template-columns: 1fr; }
-      .card-header { flex-direction: column; align-items: flex-start; }
-      table { font-size: 0.9rem; }
-      th, td { padding: 0.75rem 0.5rem; }
-    }
-    
-    .text-center { text-align: center; }
-    .mt-1 { margin-top: 1rem; }
-    .mb-1 { margin-bottom: 1rem; }
-    .flex { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .hidden { display: none !important; }
+    body { font-family: 'Tajawal', 'Segoe UI', sans-serif; background: #f0f4f8; }
+    .card { background: white; border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02); }
+    .sidebar-item { transition: all 0.2s; }
+    .sidebar-item:hover, .sidebar-item.active { background: #eef2ff; color: #4f46e5; border-right: 4px solid #4f46e5; }
+    .filter-bar { background: white; border-radius: 16px; padding: 1rem; margin-bottom: 1.5rem; }
   </style>
 </head>
-<body>
+<body class="text-gray-800">
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="nav-container">
-      <div class="logo">🏥 عيادتي</div>
-      <ul class="nav-links">
-        <li><button onclick="showPage('appointments')" class="active" data-page="appointments">📋 المواعيد</button></li>
-        <li><button onclick="showPage('register')" data-page="register">➕ تسجيل جديد</button></li>
-        <li><button onclick="showPage('settings')" data-page="settings">⚙️ الإعدادات</button></li>
-      </ul>
+<!-- شاشة تسجيل الدخول (تظهر قبل المصادقة) -->
+<div id="auth-container" class="min-h-screen flex items-center justify-center p-4">
+  <div class="card w-full max-w-md p-8">
+    <div class="text-center mb-6">
+      <i class="fas fa-calendar-check text-4xl text-indigo-600 mb-2"></i>
+      <h2 class="text-2xl font-bold">نظام إدارة المواعيد</h2>
+      <p class="text-gray-500 mt-1">قم بتسجيل الدخول للمتابعة</p>
     </div>
-  </nav>
-
-  <!-- 📋 صفحة المواعيد -->
-  <div id="page-appointments" class="container page active">
-    <div class="card">
-      <div class="card-header">
-        <h2 class="card-title">📅 قائمة المواعيد</h2>
-        <button class="btn btn-primary" onclick="loadAppointments()">🔄 تحديث</button>
+    <form id="login-form" class="space-y-4">
+      <div>
+        <label class="block text-sm font-medium mb-1">البريد الإلكتروني</label>
+        <input type="email" id="login-email" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition">
       </div>
+      <div>
+        <label class="block text-sm font-medium mb-1">كلمة المرور</label>
+        <input type="password" id="login-password" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 outline-none transition">
+      </div>
+      <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition shadow-md">
+        <i class="fas fa-sign-in-alt ml-2"></i> دخول
+      </button>
+    </form>
+    <p class="text-center mt-4 text-sm text-gray-500">
+      ليس لديك حساب؟ 
+      <button id="show-signup" class="text-indigo-600 hover:underline font-medium">إنشاء حساب جديد</button>
+    </p>
+    <div id="auth-message" class="mt-4 text-sm text-center text-red-500"></div>
+  </div>
+</div>
 
-      <div class="filters">
-        <div class="form-group" style="margin:0;flex:1;min-width:150px">
-          <label style="font-size:0.9rem">من تاريخ</label>
-          <input type="date" id="filter-from" class="form-control" style="padding:0.5rem">
+<!-- لوحة التحكم الرئيسية (مخفية حتى المصادقة) -->
+<div id="dashboard-container" class="hidden min-h-screen flex">
+  <!-- الشريط الجانبي -->
+  <aside class="w-72 bg-white shadow-xl rounded-l-3xl flex flex-col p-5">
+    <div class="flex items-center gap-3 px-3 py-4 border-b border-gray-100">
+      <div class="bg-indigo-100 p-2 rounded-xl">
+        <i class="fas fa-hospital-user text-indigo-600 text-xl"></i>
+      </div>
+      <div>
+        <h1 class="font-bold text-lg">عيادتي</h1>
+        <p class="text-xs text-gray-500" id="user-email-display"></p>
+      </div>
+    </div>
+    
+    <nav class="flex-1 mt-6 space-y-1">
+      <div class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer" data-page="appointments">
+        <i class="fas fa-list-ul w-5"></i>
+        <span>المواعيد</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer" data-page="register">
+        <i class="fas fa-plus-circle w-5"></i>
+        <span>تسجيل موعد</span>
+      </div>
+      <div class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-xl cursor-pointer" data-page="settings">
+        <i class="fas fa-cog w-5"></i>
+        <span>إعدادات العيادة</span>
+      </div>
+    </nav>
+    
+    <div class="pt-4 border-t border-gray-100">
+      <button id="logout-btn" class="w-full flex items-center gap-2 px-4 py-3 text-red-500 hover:bg-red-50 rounded-xl transition">
+        <i class="fas fa-sign-out-alt"></i>
+        <span>تسجيل الخروج</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- المحتوى الرئيسي -->
+  <main class="flex-1 p-8 overflow-y-auto max-h-screen">
+    <!-- الصفحة 1: عرض المواعيد مع فلاتر -->
+    <div id="page-appointments" class="page-content">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold"><i class="fas fa-calendar-alt text-indigo-500 ml-2"></i>المواعيد</h2>
+        <button id="refresh-appointments" class="bg-white px-4 py-2 rounded-xl shadow-sm hover:shadow transition">
+          <i class="fas fa-sync-alt ml-1"></i> تحديث
+        </button>
+      </div>
+      
+      <!-- فلاتر -->
+      <div class="filter-bar flex flex-wrap gap-4 items-end">
+        <div>
+          <label class="block text-sm font-medium mb-1">من تاريخ</label>
+          <input type="date" id="filter-date-from" class="border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-indigo-300">
         </div>
-        <div class="form-group" style="margin:0;flex:1;min-width:150px">
-          <label style="font-size:0.9rem">إلى تاريخ</label>
-          <input type="date" id="filter-to" class="form-control" style="padding:0.5rem">
+        <div>
+          <label class="block text-sm font-medium mb-1">إلى تاريخ</label>
+          <input type="date" id="filter-date-to" class="border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-indigo-300">
         </div>
-        <div class="form-group" style="margin:0;flex:1;min-width:150px">
-          <label style="font-size:0.9rem">الحالة</label>
-          <select id="filter-status" class="form-control" style="padding:0.5rem">
+        <div>
+          <label class="block text-sm font-medium mb-1">الحالة</label>
+          <select id="filter-status" class="border border-gray-200 rounded-lg px-3 py-2 focus:ring-1 focus:ring-indigo-300">
             <option value="">الكل</option>
             <option value="pending">قيد الانتظار</option>
             <option value="confirmed">مؤكد</option>
             <option value="cancelled">ملغي</option>
           </select>
         </div>
-        <button class="btn btn-secondary" onclick="applyFilters()">🔍 بحث</button>
-        <button class="btn btn-danger" onclick="clearFilters()" style="background:#94a3b8">🗑️ مسح</button>
+        <button id="apply-filters" class="bg-indigo-100 text-indigo-700 px-5 py-2 rounded-lg hover:bg-indigo-200 transition">
+          <i class="fas fa-filter ml-1"></i> تطبيق
+        </button>
+        <button id="clear-filters" class="text-gray-500 hover:text-gray-700 px-3 py-2">
+          مسح الفلاتر
+        </button>
       </div>
-
-      <div class="table-container">
-        <table>
-          <thead>
+      
+      <!-- جدول المواعيد -->
+      <div class="card overflow-x-auto p-0">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th>المريض</th><th>الهاتف</th><th>التاريخ</th><th>الوقت</th><th>الحالة</th><th>إجراءات</th>
+              <th class="px-6 py-4 text-right">المريض</th>
+              <th class="px-6 py-4 text-right">الهاتف</th>
+              <th class="px-6 py-4 text-right">التاريخ</th>
+              <th class="px-6 py-4 text-right">الوقت</th>
+              <th class="px-6 py-4 text-right">الحالة</th>
+              <th class="px-6 py-4 text-right">إجراءات</th>
             </tr>
           </thead>
-          <tbody id="appointments-body">
-            <tr><td colspan="6" class="loading">جاري التحميل...</td></tr>
+          <tbody id="appointments-table-body">
+            <tr><td colspan="6" class="text-center py-8 text-gray-400">جاري التحميل...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-  </div>
 
-  <!-- ➕ صفحة التسجيل -->
-  <div id="page-register" class="container page">
-    <div class="card">
-      <div class="card-header"><h2 class="card-title">📝 تسجيل موعد جديد</h2></div>
-      <div id="alert-register"></div>
-      <form id="appointment-form">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>اسم المريض *</label>
-            <input type="text" id="patient-name" class="form-control" required placeholder="أدخل الاسم الكامل">
+    <!-- الصفحة 2: تسجيل موعد جديد -->
+    <div id="page-register" class="page-content hidden">
+      <h2 class="text-2xl font-bold mb-6"><i class="fas fa-plus-circle text-indigo-500 ml-2"></i>تسجيل موعد جديد</h2>
+      
+      <div class="card max-w-2xl p-6">
+        <form id="appointment-form" class="space-y-5">
+          <div>
+            <label class="block font-medium mb-1">اسم المريض <span class="text-red-500">*</span></label>
+            <input type="text" id="patient-name" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200">
           </div>
-          <div class="form-group">
-            <label>رقم الهاتف *</label>
-            <input type="tel" id="phone" class="form-control" required pattern="^05[0-9]{8}$" placeholder="05XXXXXXXX">
-            <small style="color:var(--text-light)">مثال: 0512345678</small>
+          <div>
+            <label class="block font-medium mb-1">رقم الهاتف <span class="text-red-500">*</span></label>
+            <input type="tel" id="patient-phone" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200" dir="ltr">
           </div>
-          <div class="form-group">
-            <label>تاريخ الموعد *</label>
-            <input type="date" id="appointment-date" class="form-control" required>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-medium mb-1">التاريخ <span class="text-red-500">*</span></label>
+              <input type="date" id="appointment-date" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">الوقت <span class="text-red-500">*</span></label>
+              <input type="time" id="appointment-time" required class="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-200">
+            </div>
           </div>
-          <div class="form-group">
-            <label>وقت الموعد *</label>
-            <input type="time" id="appointment-time" class="form-control" required>
-            <small id="time-hint" style="color:var(--text-light)"></small>
-          </div>
-        </div>
-        <div class="flex mt-1">
-          <button type="submit" class="btn btn-success">💾 حفظ الموعد</button>
-          <button type="button" class="btn btn-secondary" onclick="document.getElementById('appointment-form').reset()">🔄 مسح</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-bottom:1rem">⚙️ قيود المواعيد النشطة</h3>
-      <div id="settings-preview" class="text-center" style="color:var(--text-light);padding:1rem">جاري تحميل الإعدادات...</div>
-    </div>
-  </div>
-
-  <!-- ⚙️ صفحة الإعدادات -->
-  <div id="page-settings" class="container page">
-    <div class="card">
-      <div class="card-header"><h2 class="card-title">🕐 ساعات الدوام</h2></div>
-      <form id="hours-form" class="form-grid">
-        <div class="form-group">
-          <label>بداية الدوام</label>
-          <input type="time" id="work-start" class="form-control" required>
-        </div>
-        <div class="form-group">
-          <label>نهاية الدوام</label>
-          <input type="time" id="work-end" class="form-control" required>
-        </div>
-        <div class="form-group" style="align-self:flex-end">
-          <button type="submit" class="btn btn-primary">💾 حفظ</button>
-        </div>
-      </form>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><h2 class="card-title">📅 الأيام المسموحة</h2></div>
-      <div class="days-grid" id="days-container"></div>
-      <div class="mt-1"><button id="save-days" class="btn btn-primary">💾 حفظ الأيام</button></div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><h2 class="card-title">🚫 تواريخ محجوزة</h2></div>
-      <div class="form-grid" style="align-items:flex-end">
-        <div class="form-group" style="flex:2">
-          <label>إضافة تاريخ محجوز</label>
-          <input type="date" id="blocked-date" class="form-control">
-        </div>
-        <div class="form-group" style="flex:1">
-          <button id="add-blocked" class="btn btn-warning">➕ إضافة</button>
-        </div>
+          <div id="validation-message" class="text-sm text-red-500 bg-red-50 p-3 rounded-lg hidden"></div>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition shadow-md">
+            <i class="fas fa-save ml-2"></i> حفظ الموعد
+          </button>
+        </form>
       </div>
-      <div class="blocked-dates-list" id="blocked-list"></div>
     </div>
-  </div>
 
-  <script>
-    // ===== 🔧 CONFIGURATION =====
-    const SUPABASE_URL = 'https://ncqvzpcqotdiwjqbwlwp.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_98lfpU1zaqG-MNxkhlvg6g_KEMPMPbS';
-    
-    const WEEK_DAYS = [
-      { value: 0, label: 'الأحد' }, { value: 1, label: 'الاثنين' },
-      { value: 2, label: 'الثلاثاء' }, { value: 3, label: 'الأربعاء' },
-      { value: 4, label: 'الخميس' }, { value: 5, label: 'الجمعة' },
-      { value: 6, label: 'السبت' }
-    ];
-
-    // ===== 🔌 SUPABASE CLIENT =====
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let clinicSettings = null;
-
-    // ===== 🎨 UTILITIES =====
-    function formatTime(timeStr) {
-      if (!timeStr) return '';
-      const [h, m] = timeStr.split(':');
-      const period = h >= 12 ? 'م' : 'ص';
-      return `${h % 12 || 12}:${m} ${period}`;
-    }
-    
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      return new Date(dateStr).toLocaleDateString('ar-SA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    }
-    
-    function showAlert(containerId, message, type = 'success') {
-      const container = document.getElementById(containerId);
-      if (!container) { alert(`${type==='success'?'✅':'❌'} ${message}`); return; }
-      const alert = document.createElement('div');
-      alert.className = `alert alert-${type}`;
-      alert.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${message}`;
-      container.appendChild(alert);
-      setTimeout(() => alert.remove(), 5000);
-    }
-    
-    function getStatusLabel(status) {
-      return { pending: 'قيد الانتظار', confirmed: 'مؤكد', cancelled: 'ملغي' }[status] || status;
-    }
-
-    // ===== 🔄 PAGE NAVIGATION =====
-    function showPage(pageName) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
-      document.getElementById(`page-${pageName}`).classList.add('active');
-      document.querySelector(`[data-page="${pageName}"]`)?.classList.add('active');
+    <!-- الصفحة 3: إعدادات العيادة (القيود) -->
+    <div id="page-settings" class="page-content hidden">
+      <h2 class="text-2xl font-bold mb-6"><i class="fas fa-cog text-indigo-500 ml-2"></i>إعدادات العيادة</h2>
       
-      if (pageName === 'appointments') loadAppointments();
-      if (pageName === 'register') { loadSettings(); updateTimeConstraints(); }
-      if (pageName === 'settings') loadClinicSettings();
-    }
+      <div class="card max-w-2xl p-6">
+        <form id="settings-form" class="space-y-6">
+          <!-- أيام العمل المسموحة -->
+          <div>
+            <label class="block font-medium mb-2">أيام العمل المسموحة</label>
+            <div class="grid grid-cols-7 gap-2">
+              <label class="flex items-center gap-1"><input type="checkbox" value="0" class="allowed-day"> الأحد</label>
+              <label class="flex items-center gap-1"><input type="checkbox" value="1" class="allowed-day"> الإثنين</label>
+              <label class="flex items-center gap-1"><input type="checkbox" value="2" class="allowed-day"> الثلاثاء</label>
+              <label class="flex items-center gap-1"><input type="checkbox" value="3" class="allowed-day"> الأربعاء</label>
+              <label class="flex items-center gap-1"><input type="checkbox" value="4" class="allowed-day"> الخميس</label>
+              <label class="flex items-center gap-1"><input type="checkbox" value="5" class="allowed-day"> الجمعة</label>
+              <label class="flex items-center gap-1"><input type="checkbox" value="6" class="allowed-day"> السبت</label>
+            </div>
+          </div>
+          
+          <!-- ساعات العمل -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block font-medium mb-1">بداية الدوام</label>
+              <input type="time" id="work-start" class="w-full px-4 py-3 border border-gray-200 rounded-xl">
+            </div>
+            <div>
+              <label class="block font-medium mb-1">نهاية الدوام</label>
+              <input type="time" id="work-end" class="w-full px-4 py-3 border border-gray-200 rounded-xl">
+            </div>
+          </div>
+          
+          <!-- التواريخ المحظورة -->
+          <div>
+            <label class="block font-medium mb-2">التواريخ المحظورة (إجازات)</label>
+            <div class="flex gap-2 mb-3">
+              <input type="date" id="new-blocked-date" class="flex-1 px-4 py-3 border border-gray-200 rounded-xl">
+              <button type="button" id="add-blocked-date" class="bg-gray-100 hover:bg-gray-200 px-4 rounded-xl transition">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            <div id="blocked-dates-list" class="flex flex-wrap gap-2 mt-2"></div>
+          </div>
+          
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition shadow-md">
+            <i class="fas fa-check-circle ml-2"></i> حفظ الإعدادات
+          </button>
+          <div id="settings-message" class="text-sm"></div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
 
-    // ===== 📋 APPOINTMENTS PAGE =====
-    async function loadAppointments(filters = {}) {
-      const tbody = document.getElementById('appointments-body');
-      tbody.innerHTML = '<tr><td colspan="6" class="loading">جاري التحميل...</td></tr>';
-      
-      try {
-        let query = supabase.from('appointments').select('*').order('appointment_date', { ascending: true }).order('appointment_time', { ascending: true });
-        if (filters.from) query = query.gte('appointment_date', filters.from);
-        if (filters.to) query = query.lte('appointment_date', filters.to);
-        if (filters.status) query = query.eq('status', filters.status);
-        
-        const { data, error } = await query;
-        if (error) throw error;
-        
-        if (!data?.length) {
-          tbody.innerHTML = `<tr><td colspan="6" class="empty-state">📭 لا توجد مواعيد مطابقة</td></tr>`;
-          return;
-        }
-        
-        tbody.innerHTML = data.map(apt => `
-          <tr>
-            <td><strong>${apt.patient_name}</strong></td>
-            <td>${apt.phone}</td>
-            <td>${formatDate(apt.appointment_date)}</td>
-            <td>${formatTime(apt.appointment_time)}</td>
-            <td><span class="status-badge status-${apt.status}">${getStatusLabel(apt.status)}</span></td>
-            <td>
-              <button class="btn btn-warning" style="padding:0.3rem 0.6rem;font-size:0.8rem" onclick="updateStatus('${apt.id}', 'confirmed')">✓</button>
-              <button class="btn btn-danger" style="padding:0.3rem 0.6rem;font-size:0.8rem" onclick="updateStatus('${apt.id}', 'cancelled')">✕</button>
-            </td>
-          </tr>
-        `).join('');
-      } catch (err) {
-        console.error('Load error:', err);
-        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--danger)">❌ ${err.message}</td></tr>`;
+<script>
+  // ---------- تهيئة Supabase ----------
+  const SUPABASE_URL = 'https://ncqvzpcqotdiwjqbwlwp.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_98lfpU1zaqG-MNxkhlvg6g_KEMPMPbS';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ---------- المتغيرات العامة ----------
+  let currentUser = null;
+  let clinicSettings = null; // تخزين إعدادات العيادة الحالية
+
+  // عناصر DOM
+  const authContainer = document.getElementById('auth-container');
+  const dashboardContainer = document.getElementById('dashboard-container');
+  const loginForm = document.getElementById('login-form');
+  const showSignupBtn = document.getElementById('show-signup');
+  const authMessage = document.getElementById('auth-message');
+  const logoutBtn = document.getElementById('logout-btn');
+  const userEmailDisplay = document.getElementById('user-email-display');
+  
+  // صفحات المحتوى
+  const pages = {
+    appointments: document.getElementById('page-appointments'),
+    register: document.getElementById('page-register'),
+    settings: document.getElementById('page-settings')
+  };
+  
+  // عناصر التنقل
+  const sidebarItems = document.querySelectorAll('.sidebar-item');
+  
+  // ---------- وظائف المصادقة ----------
+  async function checkSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      showDashboard();
+    } else {
+      showAuth();
+    }
+  }
+
+  function showAuth() {
+    authContainer.classList.remove('hidden');
+    dashboardContainer.classList.add('hidden');
+  }
+
+  function showDashboard() {
+    authContainer.classList.add('hidden');
+    dashboardContainer.classList.remove('hidden');
+    if (currentUser) {
+      userEmailDisplay.textContent = currentUser.email;
+    }
+    // تحميل الإعدادات العامة مرة واحدة
+    loadClinicSettings();
+    // عرض صفحة المواعيد افتراضياً
+    switchPage('appointments');
+  }
+
+  // تسجيل الدخول
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      authMessage.textContent = 'خطأ في البريد الإلكتروني أو كلمة المرور';
+    } else {
+      currentUser = data.user;
+      showDashboard();
+    }
+  });
+
+  // عرض نموذج التسجيل (مبسط)
+  showSignupBtn.addEventListener('click', async () => {
+    const email = prompt('أدخل البريد الإلكتروني للتسجيل:');
+    if (!email) return;
+    const password = prompt('أدخل كلمة المرور (6 أحرف على الأقل):');
+    if (!password) return;
+    
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+      alert('خطأ في التسجيل: ' + error.message);
+    } else {
+      alert('تم إنشاء الحساب! يمكنك الآن تسجيل الدخول.');
+      // سيتم إنشاء ملف شخصي تلقائياً عبر trigger (افترضنا وجوده)
+    }
+  });
+
+  // تسجيل الخروج
+  logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    currentUser = null;
+    showAuth();
+  });
+
+  // ---------- التنقل بين الصفحات ----------
+  function switchPage(pageId) {
+    // إخفاء جميع الصفحات
+    Object.values(pages).forEach(p => p.classList.add('hidden'));
+    // إظهار الصفحة المطلوبة
+    pages[pageId].classList.remove('hidden');
+    
+    // تحديث حالة الشريط الجانبي
+    sidebarItems.forEach(item => {
+      const page = item.dataset.page;
+      if (page === pageId) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
       }
-    }
+    });
     
-    async function updateStatus(id, newStatus) {
-      if (!confirm(`تغيير الحالة إلى "${getStatusLabel(newStatus)}"؟`)) return;
-      try {
-        const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
-        if (error) throw error;
-        showAlert('appointments-body', '✅ تم التحديث', 'success');
-        loadAppointments(getCurrentFilters());
-      } catch (err) {
-        showAlert('appointments-body', `❌ ${err.message}`, 'error');
-      }
-    }
-    
-    function applyFilters() {
-      loadAppointments(getCurrentFilters());
-    }
-    
-    function clearFilters() {
-      document.getElementById('filter-from').value = '';
-      document.getElementById('filter-to').value = '';
-      document.getElementById('filter-status').value = '';
+    // تحميل بيانات الصفحة
+    if (pageId === 'appointments') {
       loadAppointments();
+    } else if (pageId === 'settings') {
+      populateSettingsForm();
     }
-    
-    function getCurrentFilters() {
-      return {
-        from: document.getElementById('filter-from').value,
-        to: document.getElementById('filter-to').value,
-        status: document.getElementById('filter-status').value
-      };
-    }
+  }
 
-    // ===== ➕ REGISTER PAGE =====
-    async function loadSettings() {
-      try {
-        const { data, error } = await supabase.from('clinic_settings').select('*').single();
-        if (error) throw error;
-        clinicSettings = data;
-        updateSettingsPreview();
-        updateTimeConstraints();
-      } catch (err) { console.error('Settings error:', err); }
+  sidebarItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const page = item.dataset.page;
+      if (page) switchPage(page);
+    });
+  });
+
+  // ---------- تحميل إعدادات العيادة ----------
+  async function loadClinicSettings() {
+    const { data, error } = await supabase
+      .from('clinic_settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+      
+    if (data) {
+      clinicSettings = data;
+    } else {
+      // إنشاء صف افتراضي إذا لم يوجد
+      const defaultSettings = {
+        id: 1,
+        allowed_days: [0,1,2,3,4], // الأحد إلى الخميس
+        blocked_dates: [],
+        work_start: '09:00:00',
+        work_end: '17:00:00'
+      };
+      await supabase.from('clinic_settings').upsert(defaultSettings);
+      clinicSettings = defaultSettings;
+    }
+  }
+
+  // ---------- الصفحة 1: المواعيد ----------
+  async function loadAppointments() {
+    const tbody = document.getElementById('appointments-table-body');
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">جاري التحميل...</td></tr>';
+    
+    let query = supabase.from('appointments').select('*').order('appointment_date', { ascending: true });
+    
+    // تطبيق الفلاتر
+    const dateFrom = document.getElementById('filter-date-from').value;
+    const dateTo = document.getElementById('filter-date-to').value;
+    const status = document.getElementById('filter-status').value;
+    
+    if (dateFrom) query = query.gte('appointment_date', dateFrom);
+    if (dateTo) query = query.lte('appointment_date', dateTo);
+    if (status) query = query.eq('status', status);
+    
+    const { data: appointments, error } = await query;
+    
+    if (error) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-red-500">حدث خطأ في التحميل</td></tr>';
+      return;
     }
     
-    function updateSettingsPreview() {
-      const preview = document.getElementById('settings-preview');
-      if (!clinicSettings) return;
-      const days = clinicSettings.allowed_days?.map(d => WEEK_DAYS.find(w => w.value === d)?.label).filter(Boolean).join('، ') || 'جميع الأيام';
-      preview.innerHTML = `
-        <p><strong>🕐 ساعات العمل:</strong> ${formatTime(clinicSettings.work_start)} - ${formatTime(clinicSettings.work_end)}</p>
-        <p><strong>📅 الأيام:</strong> ${days}</p>
-        <p><strong>🚫 محجوز:</strong> ${clinicSettings.blocked_dates?.length || 0} تواريخ</p>
+    if (!appointments || appointments.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-400">لا توجد مواعيد</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = appointments.map(apt => {
+      const statusBadge = {
+        pending: '<span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs">قيد الانتظار</span>',
+        confirmed: '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs">مؤكد</span>',
+        cancelled: '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs">ملغي</span>'
+      }[apt.status] || apt.status;
+      
+      return `
+        <tr class="border-b border-gray-50 hover:bg-gray-50/50">
+          <td class="px-6 py-4 font-medium">${apt.patient_name}</td>
+          <td class="px-6 py-4" dir="ltr">${apt.phone}</td>
+          <td class="px-6 py-4">${apt.appointment_date}</td>
+          <td class="px-6 py-4">${apt.appointment_time?.substring(0,5)}</td>
+          <td class="px-6 py-4">${statusBadge}</td>
+          <td class="px-6 py-4">
+            <select class="status-selector text-sm border rounded-lg px-2 py-1" data-id="${apt.id}">
+              <option value="pending" ${apt.status === 'pending' ? 'selected' : ''}>قيد الانتظار</option>
+              <option value="confirmed" ${apt.status === 'confirmed' ? 'selected' : ''}>مؤكد</option>
+              <option value="cancelled" ${apt.status === 'cancelled' ? 'selected' : ''}>ملغي</option>
+            </select>
+          </td>
+        </tr>
       `;
-    }
+    }).join('');
     
-    function updateTimeConstraints() {
-      const timeInput = document.getElementById('appointment-time');
-      const hint = document.getElementById('time-hint');
-      const dateInput = document.getElementById('appointment-date');
-      
-      if (!clinicSettings) return;
-      timeInput.min = clinicSettings.work_start;
-      timeInput.max = clinicSettings.work_end;
-      hint.textContent = `الوقت: ${formatTime(clinicSettings.work_start)} - ${formatTime(clinicSettings.work_end)}`;
-      
-      dateInput.onchange = (e) => {
-        const date = e.target.value;
-        if (!date) return;
-        const day = new Date(date).getDay();
-        
-        if (clinicSettings.allowed_days && !clinicSettings.allowed_days.includes(day)) {
-          showAlert('alert-register', `⚠️ ${WEEK_DAYS[day].label} غير متاح`, 'error');
-          e.target.value = '';
-          return;
+    // إضافة مستمعات تغيير الحالة
+    document.querySelectorAll('.status-selector').forEach(select => {
+      select.addEventListener('change', async (e) => {
+        const id = e.target.dataset.id;
+        const newStatus = e.target.value;
+        const { error } = await supabase.from('appointments').update({ status: newStatus }).eq('id', id);
+        if (!error) {
+          // تحديث الصف بصرياً (يمكن إعادة تحميل الجدول)
+          loadAppointments();
         }
-        if (clinicSettings.blocked_dates?.includes(date)) {
-          showAlert('alert-register', '⚠️ هذا التاريخ محجوز', 'error');
-          e.target.value = '';
-        }
-      };
-    }
-    
-    document.getElementById('appointment-form')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const apt = {
-        patient_name: document.getElementById('patient-name').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        appointment_date: document.getElementById('appointment-date').value,
-        appointment_time: document.getElementById('appointment-time').value,
-        status: 'pending'
-      };
-      
-      const day = new Date(apt.appointment_date).getDay();
-      if (clinicSettings?.allowed_days && !clinicSettings.allowed_days.includes(day)) {
-        showAlert('alert-register', '❌ اليوم غير متاح', 'error');
-        return;
-      }
-      if (clinicSettings?.blocked_dates?.includes(apt.appointment_date)) {
-        showAlert('alert-register', '❌ التاريخ محجوز', 'error');
-        return;
-      }
-      if (apt.appointment_time < clinicSettings?.work_start || apt.appointment_time > clinicSettings?.work_end) {
-        showAlert('alert-register', '❌ الوقت خارج الدوام', 'error');
-        return;
-      }
-      
-      try {
-        const { error } = await supabase.from('appointments').insert([apt]);
-        if (error) throw error;
-        showAlert('alert-register', '✅ تم الحفظ بنجاح!');
-        e.target.reset();
-        updateTimeConstraints();
-      } catch (err) {
-        showAlert('alert-register', `❌ ${err.message}`, 'error');
-      }
-    });
-
-    // ===== ⚙️ SETTINGS PAGE =====
-    function renderDaysCheckboxes() {
-      const container = document.getElementById('days-container');
-      if (!container) return;
-      container.innerHTML = WEEK_DAYS.map(day => `
-        <label class="day-checkbox" data-value="${day.value}">
-          <input type="checkbox" value="${day.value}">
-          <span>${day.label}</span>
-        </label>
-      `).join('');
-      
-      container.querySelectorAll('.day-checkbox').forEach(cb => {
-        cb.onclick = (e) => {
-          if (e.target.tagName !== 'INPUT') {
-            const input = cb.querySelector('input');
-            input.checked = !input.checked;
-          }
-          cb.classList.toggle('checked', cb.querySelector('input').checked);
-        };
       });
-    }
-    
-    async function loadClinicSettings() {
-      try {
-        const { data, error } = await supabase.from('clinic_settings').select('*').single();
-        if (error) throw error;
-        
-        document.getElementById('work-start').value = data.work_start;
-        document.getElementById('work-end').value = data.work_end;
-        
-        document.querySelectorAll('.day-checkbox input').forEach(cb => {
-          cb.checked = data.allowed_days?.includes(parseInt(cb.value));
-          cb.closest('.day-checkbox').classList.toggle('checked', cb.checked);
-        });
-        
-        renderBlockedDates(data.blocked_dates || []);
-      } catch (err) {
-        console.error('Settings load error:', err);
-      }
-    }
-    
-    function renderBlockedDates(dates) {
-      const list = document.getElementById('blocked-list');
-      if (!list) return;
-      if (!dates.length) {
-        list.innerHTML = '<small style="color:var(--text-light)">لا توجد تواريخ محجوزة</small>';
-        return;
-      }
-      list.innerHTML = dates.map(date => `
-        <span class="blocked-tag">${formatDate(date)} <button type="button" onclick="removeBlockedDate('${date}')">&times;</button></span>
-      `).join('');
-    }
-    
-    document.getElementById('hours-form')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      try {
-        const { error } = await supabase.from('clinic_settings')
-          .update({ work_start: document.getElementById('work-start').value, work_end: document.getElementById('work-end').value })
-          .eq('id', 1);
-        if (error) throw error;
-        showAlert('page-settings', '✅ تم حفظ ساعات العمل', 'success');
-      } catch (err) {
-        showAlert('page-settings', `❌ ${err.message}`, 'error');
-      }
     });
-    
-    document.getElementById('save-days')?.addEventListener('click', async () => {
-      const days = Array.from(document.querySelectorAll('.day-checkbox input:checked')).map(cb => parseInt(cb.value));
-      try {
-        const { error } = await supabase.from('clinic_settings').update({ allowed_days: days }).eq('id', 1);
-        if (error) throw error;
-        showAlert('page-settings', '✅ تم حفظ الأيام', 'success');
-      } catch (err) {
-        showAlert('page-settings', `❌ ${err.message}`, 'error');
-      }
-    });
-    
-    document.getElementById('add-blocked')?.addEventListener('click', async () => {
-      const date = document.getElementById('blocked-date').value;
-      if (!date) { showAlert('page-settings', '⚠️ اختر تاريخاً', 'error'); return; }
-      
-      try {
-        const { data: current } = await supabase.from('clinic_settings').select('blocked_dates').single();
-        const blocked = current?.blocked_dates || [];
-        if (blocked.includes(date)) { showAlert('page-settings', '⚠️ موجود مسبقاً', 'error'); return; }
-        
-        const { error } = await supabase.from('clinic_settings').update({ blocked_dates: [...blocked, date] }).eq('id', 1);
-        if (error) throw error;
-        showAlert('page-settings', '✅ تمت الإضافة', 'success');
-        loadClinicSettings();
-      } catch (err) {
-        showAlert('page-settings', `❌ ${err.message}`, 'error');
-      }
-    });
-    
-    async function removeBlockedDate(dateToRemove) {
-      if (!confirm('إزالة هذا التاريخ؟')) return;
-      try {
-        const { data: current } = await supabase.from('clinic_settings').select('blocked_dates').single();
-        const updated = (current?.blocked_dates || []).filter(d => d !== dateToRemove);
-        const { error } = await supabase.from('clinic_settings').update({ blocked_dates: updated }).eq('id', 1);
-        if (error) throw error;
-        showAlert('page-settings', '✅ تمت الإزالة', 'success');
-        loadClinicSettings();
-      } catch (err) {
-        showAlert('page-settings', `❌ ${err.message}`, 'error');
-      }
-    }
+  }
 
-    // ===== 🚀 INITIALIZATION =====
-    document.addEventListener('DOMContentLoaded', async () => {
-      const today = new Date().toISOString().split('T')[0];
-      document.querySelectorAll('input[type="date"]').forEach(inp => { if (!inp.value) inp.min = today; });
-      renderDaysCheckboxes();
-      loadAppointments();
-      loadSettings();
+  document.getElementById('apply-filters').addEventListener('click', loadAppointments);
+  document.getElementById('clear-filters').addEventListener('click', () => {
+    document.getElementById('filter-date-from').value = '';
+    document.getElementById('filter-date-to').value = '';
+    document.getElementById('filter-status').value = '';
+    loadAppointments();
+  });
+  document.getElementById('refresh-appointments').addEventListener('click', loadAppointments);
+
+  // ---------- الصفحة 2: تسجيل موعد ----------
+  const appointmentForm = document.getElementById('appointment-form');
+  const validationMsg = document.getElementById('validation-message');
+
+  // التحقق من صحة الموعد بناءً على الإعدادات
+  function validateAppointment(dateStr, timeStr) {
+    if (!clinicSettings) return { valid: false, message: 'لم يتم تحميل الإعدادات بعد' };
+    
+    const appointmentDate = new Date(dateStr + 'T' + timeStr);
+    const dayOfWeek = appointmentDate.getDay(); // 0 = الأحد في JS
+    
+    // التحقق من اليوم المسموح
+    if (!clinicSettings.allowed_days.includes(dayOfWeek)) {
+      return { valid: false, message: 'هذا اليوم ليس ضمن أيام العمل المسموحة' };
+    }
+    
+    // التحقق من التاريخ المحظور
+    if (clinicSettings.blocked_dates.includes(dateStr)) {
+      return { valid: false, message: 'هذا التاريخ محظور (إجازة)' };
+    }
+    
+    // التحقق من الوقت ضمن ساعات العمل
+    const timeValue = timeStr; // "HH:MM"
+    const workStart = clinicSettings.work_start?.substring(0,5);
+    const workEnd = clinicSettings.work_end?.substring(0,5);
+    
+    if (timeValue < workStart || timeValue > workEnd) {
+      return { valid: false, message: `الوقت يجب أن يكون بين ${workStart} و ${workEnd}` };
+    }
+    
+    return { valid: true };
+  }
+
+  appointmentForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const patientName = document.getElementById('patient-name').value.trim();
+    const phone = document.getElementById('patient-phone').value.trim();
+    const date = document.getElementById('appointment-date').value;
+    const time = document.getElementById('appointment-time').value;
+    
+    if (!clinicSettings) {
+      validationMsg.textContent = 'الرجاء الانتظار حتى تحميل الإعدادات';
+      validationMsg.classList.remove('hidden');
+      return;
+    }
+    
+    const validation = validateAppointment(date, time);
+    if (!validation.valid) {
+      validationMsg.textContent = validation.message;
+      validationMsg.classList.remove('hidden');
+      return;
+    }
+    
+    validationMsg.classList.add('hidden');
+    
+    const { data, error } = await supabase.from('appointments').insert([{
+      patient_name: patientName,
+      phone: phone,
+      appointment_date: date,
+      appointment_time: time,
+      status: 'pending'
+    }]);
+    
+    if (error) {
+      validationMsg.textContent = 'حدث خطأ أثناء الحفظ: ' + error.message;
+      validationMsg.classList.remove('hidden');
+    } else {
+      alert('تم تسجيل الموعد بنجاح');
+      appointmentForm.reset();
+      switchPage('appointments'); // العودة لصفحة المواعيد
+    }
+  });
+
+  // ---------- الصفحة 3: الإعدادات ----------
+  function populateSettingsForm() {
+    if (!clinicSettings) return;
+    
+    // أيام العمل
+    document.querySelectorAll('.allowed-day').forEach(cb => {
+      cb.checked = clinicSettings.allowed_days.includes(parseInt(cb.value));
     });
-  </script>
+    
+    // ساعات العمل
+    document.getElementById('work-start').value = clinicSettings.work_start?.substring(0,5) || '09:00';
+    document.getElementById('work-end').value = clinicSettings.work_end?.substring(0,5) || '17:00';
+    
+    // التواريخ المحظورة
+    renderBlockedDatesList();
+  }
+  
+  function renderBlockedDatesList() {
+    const container = document.getElementById('blocked-dates-list');
+    const dates = clinicSettings.blocked_dates || [];
+    container.innerHTML = dates.map(date => `
+      <span class="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2">
+        ${date}
+        <button type="button" class="remove-blocked-date text-red-400 hover:text-red-600" data-date="${date}">
+          <i class="fas fa-times"></i>
+        </button>
+      </span>
+    `).join('');
+    
+    // إضافة مستمعات الحذف
+    document.querySelectorAll('.remove-blocked-date').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const dateToRemove = btn.dataset.date;
+        clinicSettings.blocked_dates = clinicSettings.blocked_dates.filter(d => d !== dateToRemove);
+        renderBlockedDatesList();
+      });
+    });
+  }
+  
+  document.getElementById('add-blocked-date').addEventListener('click', () => {
+    const input = document.getElementById('new-blocked-date');
+    const date = input.value;
+    if (!date) return;
+    if (!clinicSettings.blocked_dates.includes(date)) {
+      clinicSettings.blocked_dates.push(date);
+      renderBlockedDatesList();
+    }
+    input.value = '';
+  });
+  
+  document.getElementById('settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const allowedDays = Array.from(document.querySelectorAll('.allowed-day:checked')).map(cb => parseInt(cb.value));
+    const workStart = document.getElementById('work-start').value + ':00';
+    const workEnd = document.getElementById('work-end').value + ':00';
+    
+    const updates = {
+      allowed_days: allowedDays,
+      work_start: workStart,
+      work_end: workEnd,
+      blocked_dates: clinicSettings.blocked_dates
+    };
+    
+    const { error } = await supabase.from('clinic_settings').update(updates).eq('id', 1);
+    const msgDiv = document.getElementById('settings-message');
+    
+    if (error) {
+      msgDiv.innerHTML = `<span class="text-red-500">خطأ: ${error.message}</span>`;
+    } else {
+      msgDiv.innerHTML = `<span class="text-green-600"><i class="fas fa-check-circle ml-1"></i>تم حفظ الإعدادات بنجاح</span>`;
+      await loadClinicSettings(); // إعادة تحميل
+    }
+  });
+
+  // ---------- بدء التطبيق ----------
+  checkSession();
+</script>
 </body>
 </html>
