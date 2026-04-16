@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
   
   <style>
-    /* === متغيرات الألوان === */
+    /* ... (نفس الـ CSS السابق بدون تغيير) ... */
     :root {
       --bg-primary: #f8fafc;
       --bg-secondary: #ffffff;
@@ -43,9 +43,7 @@
       --shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
 
-    /* === الإعدادات العامة === */
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Tajawal', -apple-system, sans-serif;
       background: var(--bg-primary);
@@ -53,8 +51,6 @@
       line-height: 1.6;
       transition: background 0.3s, color 0.3s;
     }
-
-    /* === الهيدر === */
     .header {
       background: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color);
@@ -64,7 +60,6 @@
       z-index: 100;
       box-shadow: var(--shadow);
     }
-
     .header-content {
       max-width: 1400px;
       margin: 0 auto;
@@ -72,19 +67,16 @@
       justify-content: space-between;
       align-items: center;
     }
-
     .header h1 {
       font-size: 1.5rem;
       display: flex;
       align-items: center;
       gap: 0.5rem;
     }
-
     .header-actions {
       display: flex;
       gap: 0.5rem;
     }
-
     .btn-icon {
       background: var(--bg-primary);
       border: 1px solid var(--border-color);
@@ -97,14 +89,11 @@
       gap: 0.25rem;
       transition: all 0.2s;
     }
-
     .btn-icon:hover {
       background: var(--primary);
       color: white;
       border-color: var(--primary);
     }
-
-    /* === الفلاتر === */
     .filters {
       max-width: 1400px;
       margin: 1.5rem auto;
@@ -114,14 +103,12 @@
       flex-wrap: wrap;
       align-items: center;
     }
-
     .filter-group {
       display: flex;
       gap: 0.5rem;
       flex: 1;
       min-width: 200px;
     }
-
     .filters input,
     .filters select {
       flex: 1;
@@ -132,15 +119,12 @@
       color: var(--text-primary);
       font-family: inherit;
     }
-
     .filters input:focus,
     .filters select:focus {
       outline: none;
       border-color: var(--primary);
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
-
-    /* === الأزرار === */
     .btn-primary {
       background: var(--primary);
       color: white;
@@ -155,9 +139,7 @@
       gap: 0.5rem;
       transition: background 0.2s;
     }
-
     .btn-primary:hover { background: var(--primary-hover); }
-
     .btn-secondary {
       background: var(--bg-primary);
       color: var(--text-primary);
@@ -167,7 +149,6 @@
       cursor: pointer;
       font-family: inherit;
     }
-
     .btn-whatsapp {
       background: var(--whatsapp);
       color: white;
@@ -182,16 +163,12 @@
       gap: 0.5rem;
       transition: opacity 0.2s;
     }
-
     .btn-whatsapp:hover { opacity: 0.9; }
-
-    /* === الجدول === */
     .dashboard {
       max-width: 1400px;
       margin: 0 auto;
       padding: 0 2rem 2rem;
     }
-
     .table-container {
       background: var(--bg-secondary);
       border-radius: var(--radius);
@@ -199,18 +176,15 @@
       overflow: hidden;
       box-shadow: var(--shadow);
     }
-
     table {
       width: 100%;
       border-collapse: collapse;
     }
-
     th, td {
       padding: 1rem;
       text-align: start;
       border-bottom: 1px solid var(--border-color);
     }
-
     th {
       background: var(--bg-primary);
       font-weight: 600;
@@ -219,24 +193,17 @@
       font-size: 0.875rem;
       letter-spacing: 0.05em;
     }
-
     tr:hover { background: rgba(59, 130, 246, 0.05); }
-
-    /* === حالة الموعد === */
     .status-badge {
       padding: 0.25rem 0.75rem;
       border-radius: 999px;
       font-size: 0.875rem;
       font-weight: 500;
     }
-
     .status-pending { background: rgba(245, 158, 11, 0.15); color: #d97706; }
     .status-confirmed { background: rgba(34, 197, 94, 0.15); color: #16a34a; }
     .status-cancelled { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
-
-    /* === الإجراءات === */
     .actions { display: flex; gap: 0.5rem; }
-
     .action-btn {
       background: none;
       border: none;
@@ -246,16 +213,12 @@
       color: var(--text-secondary);
       transition: all 0.2s;
     }
-
     .action-btn:hover {
       background: var(--bg-primary);
       color: var(--primary);
     }
-
     .action-btn.edit:hover { color: var(--warning); }
     .action-btn.whatsapp:hover { color: var(--whatsapp); }
-
-    /* === النافذة المنبثقة === */
     dialog {
       border: none;
       border-radius: var(--radius);
@@ -266,24 +229,20 @@
       max-width: 500px;
       width: 90%;
     }
-
     dialog::backdrop {
       background: rgba(0,0,0,0.5);
     }
-
     #editForm {
       display: flex;
       flex-direction: column;
       gap: 1rem;
     }
-
     #editForm label {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
       font-weight: 500;
     }
-
     #editForm input,
     #editForm select {
       padding: 0.75rem;
@@ -293,15 +252,12 @@
       color: var(--text-primary);
       font-family: inherit;
     }
-
     .modal-actions {
       display: flex;
       gap: 0.5rem;
       margin-top: 1rem;
       flex-wrap: wrap;
     }
-
-    /* === التنبيهات === */
     .toast {
       position: fixed;
       bottom: 2rem;
@@ -316,17 +272,13 @@
       z-index: 1000;
       animation: slideUp 0.3s ease;
     }
-
     .toast.success { border-left-color: var(--success); }
     .toast.error { border-left-color: var(--danger); }
     .toast.hidden { display: none; }
-
     @keyframes slideUp {
       from { opacity: 0; transform: translate(-50%, 20px); }
       to { opacity: 1; transform: translate(-50%, 0); }
     }
-
-    /* === التجاوب === */
     @media (max-width: 768px) {
       .header-content { flex-direction: column; gap: 1rem; text-align: center; }
       .filters { flex-direction: column; }
@@ -336,18 +288,14 @@
   </style>
 </head>
 <body>
-  <!-- شريط العلوي -->
   <header class="header">
     <div class="header-content">
       <h1><i class="bi bi-calendar-check"></i> <span data-i18n="pageTitle">لوحة مواعيد العيادة</span></h1>
       
       <div class="header-actions">
-        <!-- تبديل اللغة -->
         <button id="langToggle" class="btn-icon" aria-label="Toggle language">
           <i class="bi bi-globe"></i> <span id="langLabel">EN</span>
         </button>
-        
-        <!-- تبديل الوضع الليلي -->
         <button id="themeToggle" class="btn-icon" aria-label="Toggle theme">
           <i class="bi bi-moon-stars-fill"></i>
         </button>
@@ -355,7 +303,6 @@
     </div>
   </header>
 
-  <!-- أدوات البحث والفلترة -->
   <section class="filters">
     <div class="filter-group">
       <input type="text" id="searchInput" placeholder="🔍 بحث بالاسم أو الهاتف..." data-i18n-placeholder="searchPlaceholder">
@@ -376,7 +323,6 @@
     </button>
   </section>
 
-  <!-- جدول البيانات -->
   <main class="dashboard">
     <div class="table-container">
       <table id="appointmentsTable">
@@ -397,7 +343,6 @@
     </div>
   </main>
 
-  <!-- نافذة تعديل الموعد -->
   <dialog id="editModal">
     <form id="editForm">
       <h3 data-i18n="editAppointment">تعديل الموعد</h3>
@@ -442,10 +387,8 @@
     </form>
   </dialog>
 
-  <!-- التنبيهات -->
   <div id="toast" class="toast hidden"></div>
 
-  <!-- === JavaScript === -->
   <script>
     // ============================================
     // 🌐 i18n - دعم اللغتين
@@ -476,7 +419,9 @@
         loading: "جاري التحميل...",
         updated: "تم تحديث الموعد بنجاح ✓",
         error: "حدث خطأ، حاول مرة أخرى",
-        whatsappMsg: `مرحباً، هذا تذكير بموعدك في العيادة:\n📅 التاريخ: {date}\n🕐 الوقت: {time}\n👤 الاسم: {name}\nيرجى الحضور في الوقت المحدد.`,
+        // رسالة واتساب بنمط الكود المستخرج
+        whatsappMsg: `*موعد عيادة*\n\n👤 {name}\n📅 {date}\n🕐 {time}\n\nشكراً 🙏`,
+        whatsappError: "⚠️ تعذر فتح واتساب"
       },
       en: {
         pageTitle: "Clinic Appointments Dashboard",
@@ -503,7 +448,8 @@
         loading: "Loading...",
         updated: "Appointment updated successfully ✓",
         error: "An error occurred, please try again",
-        whatsappMsg: `Hello, this is a reminder for your clinic appointment:\n📅 Date: {date}\n🕐 Time: {time}\n👤 Name: {name}\nPlease arrive on time.`,
+        whatsappMsg: `*Clinic Appointment*\n\n👤 {name}\n📅 {date}\n🕐 {time}\n\nThank you 🙏`,
+        whatsappError: "⚠️ Could not open WhatsApp"
       }
     };
 
@@ -536,7 +482,7 @@
     function getLang() { return currentLang; }
 
     // ============================================
-    // 🌓 Theme Toggle - الوضع الليلي/النهاري
+    // 🌓 Theme Toggle
     // ============================================
     function initTheme() {
       const html = document.documentElement;
@@ -592,7 +538,6 @@
       initTheme();
       setLang(currentLang);
       
-      // تبديل اللغة
       document.getElementById('langToggle').addEventListener('click', () => {
         const newLang = getLang() === 'ar' ? 'en' : 'ar';
         setLang(newLang);
@@ -600,19 +545,17 @@
         renderTable();
       });
       
-      // أزرار التحكم
       document.getElementById('refreshBtn').addEventListener('click', fetchAppointments);
       document.getElementById('searchInput').addEventListener('input', renderTable);
       document.getElementById('dateFilter').addEventListener('change', renderTable);
       document.getElementById('statusFilter').addEventListener('change', renderTable);
       
-      // نافذة التعديل
       document.getElementById('closeModal').addEventListener('click', () => {
         document.getElementById('editModal').close();
       });
       
       document.getElementById('editForm').addEventListener('submit', handleSave);
-      document.getElementById('whatsappBtn').addEventListener('click', sendWhatsApp);
+      document.getElementById('whatsappBtn').addEventListener('click', sendWhatsAppFromModal);
       
       await fetchAppointments();
     });
@@ -721,43 +664,78 @@
       await fetchAppointments();
     }
 
-    // === إرسال واتساب ===
-    function sendWhatsApp() {
-      const name = document.getElementById('editName').value;
-      const phone = document.getElementById('editPhone').value;
-      const date = document.getElementById('editDate').value;
-      const time = document.getElementById('editTime').value;
+    // ============================================
+    // 📲 دوال واتساب (مستبدلة بالكود المستخرج)
+    // ============================================
+
+    /**
+     * دالة موحدة لفتح واتساب ويب مع معالجة الأخطاء والنوافذ المنبثقة
+     * مأخوذة من الملف السابق ومكيفة للمتغيرات الحالية
+     */
+    function openWA(phone, name, date, time) {
+      // 1. تنظيف الرقم (إزالة الرموز والمسافات)
+      let cleanPhone = phone.replace(/[\s\-\+\(\)]/g, '');
       
-      let msg = t('whatsappMsg')
+      // 2. تحويل الرقم المحلي إلى صيغة دولية (بافتراض رمز السعودية 966)
+      if (cleanPhone.startsWith('0')) {
+        cleanPhone = '966' + cleanPhone.slice(1);
+      }
+      
+      // 3. صياغة الرسالة حسب اللغة الحالية
+      const message = t('whatsappMsg')
         .replace('{name}', name)
         .replace('{date}', formatDate(date))
         .replace('{time}', formatTime(time));
       
-      const cleanPhone = phone.replace(/[^+\d]/g, '');
-      const intlPhone = cleanPhone.startsWith('+') ? cleanPhone.slice(1) : cleanPhone;
+      const encodedMsg = encodeURIComponent(message);
       
-      const url = `https://wa.me/${intlPhone}?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank', 'width=800,height=600');
+      // 4. بناء الرابط (استخدام web.whatsapp.com كما في الكود الأصلي)
+      const waUrl = `https://web.whatsapp.com/send?phone=${cleanPhone}&text=${encodedMsg}`;
+      
+      // 5. محاولة فتح نافذة محددة لتجنب تكرار التبويبات
+      const waWindow = window.open(waUrl, 'wa_clinic_tab', 'noopener,noreferrer');
+      
+      // 6. معالجة حالات منع النوافذ المنبثقة
+      if (!waWindow || waWindow.closed || typeof waWindow.closed === 'undefined') {
+        try {
+          // محاولة استخدام نافذة موجودة مسبقاً بنفس الاسم
+          const existing = window.open('', 'wa_clinic_tab');
+          if (existing && !existing.closed) {
+            existing.location.href = waUrl;
+            existing.focus();
+            return;
+          }
+        } catch (e) {
+          // تجاهل الأخطاء
+        }
+        // إذا فشل كل شيء، اسأل المستخدم عن فتح تبويب جديد عادي
+        if (confirm(t('whatsappError'))) {
+          window.open(waUrl, '_blank');
+        }
+      } else {
+        waWindow.focus();
+      }
     }
 
-    // === إرسال سريع من الجدول ===
+    // الإرسال من داخل نافذة التعديل
+    function sendWhatsAppFromModal() {
+      const name = document.getElementById('editName').value;
+      const phone = document.getElementById('editPhone').value;
+      const date = document.getElementById('editDate').value;
+      const time = document.getElementById('editTime').value;
+      openWA(phone, name, date, time);
+    }
+
+    // الإرسال السريع من صف الجدول
     window.quickWhatsApp = function(id) {
       const appt = appointments.find(a => a.id === id);
       if (!appt) return;
-      
-      let msg = t('whatsappMsg')
-        .replace('{name}', appt.patient_name)
-        .replace('{date}', formatDate(appt.appointment_date))
-        .replace('{time}', formatTime(appt.appointment_time));
-      
-      const cleanPhone = appt.phone.replace(/[^+\d]/g, '');
-      const intlPhone = cleanPhone.startsWith('+') ? cleanPhone.slice(1) : cleanPhone;
-      
-      const url = `https://wa.me/${intlPhone}?text=${encodeURIComponent(msg)}`;
-      window.open(url, '_blank', 'width=800,height=600');
+      openWA(appt.phone, appt.patient_name, appt.appointment_date, appt.appointment_time);
     };
 
-    // === أدوات مساعدة ===
+    // ============================================
+    // 🔧 أدوات مساعدة
+    // ============================================
     function formatDate(dateStr) {
       if (!dateStr) return '';
       const [y, m, d] = dateStr.split('-');
